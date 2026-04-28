@@ -28,7 +28,21 @@ import { UserService } from '../../core/services/user.service';
 
         <label class="space-y-1">
           <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Password</span>
-          <input class="input-base" type="password" formControlName="password" />
+          <div class="relative">
+            <input
+              class="input-base pr-10"
+              [type]="showPassword() ? 'text' : 'password'"
+              formControlName="password"
+            />
+            <button
+              class="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-slate-500 hover:text-slate-700"
+              type="button"
+              (click)="showPassword.set(!showPassword())"
+              [attr.aria-label]="showPassword() ? 'Ocultar password' : 'Mostrar password'"
+            >
+              <i class="fa-solid" [class.fa-eye]="!showPassword()" [class.fa-eye-slash]="showPassword()"></i>
+            </button>
+          </div>
         </label>
 
         <label class="space-y-1">
@@ -89,6 +103,7 @@ export class UserManagementPageComponent {
   private readonly toastService = inject(ToastService);
 
   readonly loading = signal(false);
+  readonly showPassword = signal(false);
   readonly companies = signal<Company[]>([]);
   readonly sedes = signal<Array<{ id?: number; nombre: string }>>([]);
   readonly users = signal<AppUser[]>([]);
