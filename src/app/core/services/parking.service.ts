@@ -47,8 +47,12 @@ export class ParkingService {
     return {
       placa: String(r['placa'] ?? ''),
       tipoVehiculo: String(r['tipoVehiculo'] ?? r['tipo'] ?? 'CARRO') as SalidaResumen['tipoVehiculo'],
-      horas: this.toNumber(r['horas'] ?? r['horasParqueado'] ?? r['tiempoHoras'] ?? r['duracion']),
-      total: this.toNumber(r['total'] ?? r['totalCobrado'] ?? r['valorTotal'] ?? r['monto'] ?? r['valor'])
+      tipo: r['tipo'] ? String(r['tipo']) : undefined,
+      fechaEntrada: r['fechaEntrada'] ? String(r['fechaEntrada']) : undefined,
+      fechaSalida: r['fechaSalida'] ? String(r['fechaSalida']) : undefined,
+      minutosEstadia: r['minutosEstadia'] !== undefined ? this.toNumber(r['minutosEstadia']) : undefined,
+      horas: this.toNumber(r['horas']),
+      totalPagado: this.toNumber(r['totalPagado'] ?? r['total'])
     };
   }
 

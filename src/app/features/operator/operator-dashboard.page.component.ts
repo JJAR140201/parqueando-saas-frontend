@@ -58,10 +58,12 @@ import { ToastService } from '../../core/services/toast.service';
             <dd class="text-right font-semibold">{{ resumen.placa }}</dd>
             <dt>Tipo</dt>
             <dd class="text-right font-semibold">{{ resumen.tipoVehiculo }}</dd>
+            <dt *ngIf="resumen.minutosEstadia !== undefined">Minutos</dt>
+            <dd *ngIf="resumen.minutosEstadia !== undefined" class="text-right font-semibold">{{ resumen.minutosEstadia }}</dd>
             <dt>Horas</dt>
-            <dd class="text-right font-semibold">{{ resumen.horas }}</dd>
+            <dd class="text-right font-semibold">{{ resumen.horas | number:'1.1-2' }}</dd>
             <dt>Total</dt>
-            <dd class="text-right text-base font-bold text-emerald-600">$ {{ resumen.total | number }}</dd>
+            <dd class="text-right text-base font-bold text-emerald-600">$ {{ resumen.totalPagado | number }}</dd>
           </dl>
 
           <button class="btn-primary mt-4 w-full" type="button" (click)="confirmarSalida()" [disabled]="loadingSalida()">
@@ -155,7 +157,7 @@ export class OperatorDashboardPageComponent {
 
     this.toastService.show({
       title: 'Salida registrada',
-      description: `Vehiculo ${resumen.placa} retirado. Total: $${resumen.total}`,
+      description: `Vehiculo ${resumen.placa} retirado. Total: $${resumen.totalPagado}`,
       type: 'success'
     });
     this.salidaForm.reset({ placa: '' });

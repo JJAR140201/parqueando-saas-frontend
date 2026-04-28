@@ -12,6 +12,10 @@ export interface SalidaPayload {
 export interface SalidaResumen {
   placa: string;
   tipoVehiculo: VehicleType;
+  tipo?: string;
+  fechaEntrada?: string;
+  fechaSalida?: string;
+  minutosEstadia?: number;
   horas: number;
-  total: number;
+  totalPagado: number;
 }
