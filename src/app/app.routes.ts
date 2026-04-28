@@ -3,6 +3,7 @@ import { authGuard } from './core/guards/auth.guard';
 import { roleGuard } from './core/guards/role.guard';
 import { LoginPageComponent } from './features/auth/login-page.component';
 import { MainLayoutComponent } from './features/layout/main-layout.component';
+import { MensualidadesPageComponent } from './features/mensualidades/mensualidades.page.component';
 import { OperatorDashboardPageComponent } from './features/operator/operator-dashboard.page.component';
 import { ParkingReportsPageComponent } from './features/reports/parking-reports.page.component';
 import { CompanyManagementPageComponent } from './features/super-admin/company-management.page.component';
@@ -35,6 +36,12 @@ export const routes: Routes = [
 				component: OperatorDashboardPageComponent,
 				canActivate: [roleGuard],
 				data: { roles: ['SUPER_ADMIN', 'ADMIN', 'OPERARIO'] }
+			},
+			{
+				path: 'mensualidades',
+				component: MensualidadesPageComponent,
+				canActivate: [roleGuard],
+				data: { roles: ['SUPER_ADMIN', 'ADMIN'] }
 			},
 			{
 				path: 'reportes',
