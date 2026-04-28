@@ -79,7 +79,7 @@ export class ReportService {
       estado: String(item['estado'] ?? ''),
       fechaIngreso: this.toStringOrUndefined(item['fechaIngreso'] ?? item['fechaEntrada']),
       fechaSalida: this.toStringOrUndefined(item['fechaSalida']),
-      totalCobrado: this.toNumberOrUndefined(item['totalCobrado'] ?? item['valor'] ?? item['total']),
+      totalCobrado: this.toNumberOrUndefined(item['totalPagado'] ?? item['totalCobrado'] ?? item['valor'] ?? item['total']),
       nombreEmpresa: this.toStringOrUndefined(item['nombreEmpresa'] ?? item['empresaNombre']),
       nombreSede: this.toStringOrUndefined(item['nombreSede'] ?? item['sedeNombre'])
     };
