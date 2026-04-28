@@ -1,0 +1,51 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+@import '@fortawesome/fontawesome-free/css/all.min.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+	--bg-main: radial-gradient(circle at 15% 20%, #0f2239 0%, #0b1220 45%, #111827 100%);
+	--surface: #ffffff;
+	--surface-muted: #f8fafc;
+	--text-main: #0f172a;
+	--text-soft: #64748b;
+	--line: #e2e8f0;
+	--success: #10b981;
+}
+
+html,
+body {
+	margin: 0;
+	min-height: 100%;
+	font-family: 'IBM Plex Sans', sans-serif;
+	background: var(--bg-main);
+}
+
+h1,
+h2,
+h3,
+h4 {
+	font-family: 'Sora', sans-serif;
+}
+
+.app-surface {
+	@apply rounded-2xl bg-white shadow-card;
+}
+
+.btn-primary {
+  @apply inline-flex items-center justify-center rounded-lg bg-ink px-4 py-2 font-semibold text-white transition hover:bg-navy disabled:cursor-not-allowed disabled:opacity-60;
+}
+
+.btn-secondary {
+	@apply inline-flex items-center justify-center rounded-lg border border-slate-300 px-4 py-2 font-semibold text-slate-700 transition hover:bg-slate-100;
+}
+
+.input-base {
+	@apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none ring-0 transition focus:border-cyan-500 focus:shadow-sm;
+}
+
+.badge-role {
+	@apply inline-flex items-center rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700;
+}

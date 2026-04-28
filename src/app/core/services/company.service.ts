@@ -1,0 +1,96 @@
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { catchError, map, Observable, throwError } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { Company, CompanyPayload, Sede } from '../models/company.models';
+
+@Injectable({ providedIn: 'root' })
+export class CompanyService {
+  private readonly baseUrl = `${environment.apiUrl}/api/v1/super-admin/empresas`;
+
+  constructor(private readonly http: HttpClient) {}
+
+  getAll(search?: string): Observable<Company[]> {
+    let params = new HttpParams();
+    if (search) {
+      params = params.set('search', search);
+    }
+
+    return this.http.get<unknown[]>(this.baseUrl, { params }).pipe(
+      map((companies) => companies.map((company) => this.normalizeCompany(company)))
+    );
+  }
+
+  create(payload: CompanyPayload): Observable<Company> {
+    return this.http.post<Company>(this.baseUrl, payload);
+  }
+
+  update(companyId: number, payload: CompanyPayload): Observable<Company> {
+    return this.http.put<Company>(`${this.baseUrl}/${companyId}`, payload);
+  }
+
+  delete(companyId: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${companyId}`);
+  }
+
+  getSedesByCompany(companyId: number): Observable<Sede[]> {
+    const params = new HttpParams().set('empresaId', companyId);
+
+    return this.http.get<unknown>(`${this.baseUrl}/${companyId}/sedes`).pipe(
+      map((response) => this.normalizeSedeArray(response)),
+      catchError(() =>
+        this.http
+          .get<unknown>(`${environment.apiUrl}/api/v1/super-admin/sedes`, { params })
+          .pipe(
+            map((response) => this.normalizeSedeArray(response)),
+            catchError((error) => throwError(() => error))
+          )
+      )
+    );
+  }
+
+  private normalizeCompany(rawCompany: unknown): Company {
+    const company = rawCompany as Record<string, unknown>;
+
+    return {
+      id: this.toNumber(company['id'] ?? company['empresaId']),
+      nit: String(company['nit'] ?? ''),
+      nombre: String(company['nombre'] ?? company['razonSocial'] ?? ''),
+      sedes: Array.isArray(company['sedes'])
+        ? (company['sedes'] as unknown[]).map((sede) => this.normalizeSede(sede))
+        : []
+    };
+  }
+
+  private normalizeSede(rawSede: unknown): Sede {
+    const sede = rawSede as Record<string, unknown>;
+
+    return {
+      id: this.toNumber(sede['id'] ?? sede['sedeId']),
+      nombre: String(sede['nombre'] ?? sede['nombreSede'] ?? ''),
+      capacidad: this.toNumber(sede['capacidad'] ?? sede['capacidadMaxima'])
+    };
+  }
+
+  private normalizeSedeArray(raw: unknown): Sede[] {
+    if (Array.isArray(raw)) {
+      return raw.map((sede) => this.normalizeSede(sede));
+    }
+
+    const record = raw as Record<string, unknown>;
+    if (Array.isArray(record['data'])) {
+      return (record['data'] as unknown[]).map((sede) => this.normalizeSede(sede));
+    }
+
+    if (Array.isArray(record['content'])) {
+      return (record['content'] as unknown[]).map((sede) => this.normalizeSede(sede));
+    }
+
+    return [];
+  }
+
+  private toNumber(value: unknown): number {
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? 0 : parsed;
+  }
+}
