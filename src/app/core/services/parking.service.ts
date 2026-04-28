@@ -20,12 +20,12 @@ export class ParkingService {
   previsualizarSalida(placa: string): Observable<SalidaResumen> {
     const params = new HttpParams().set('placa', placa);
     return this.http
-      .get<unknown>(`${this.baseUrl}/preview`, { params })
+      .get<unknown>(`${this.legacyBaseUrl}/salidas/precio`, { params })
       .pipe(
         map((res) => this.normalizeResumen(res)),
         catchError(() =>
           this.http
-            .get<unknown>(`${this.legacyBaseUrl}/salidas/precio`, { params })
+            .post<unknown>(`${this.baseUrl}/salida`, { placa })
             .pipe(map((res) => this.normalizeResumen(res)))
         )
       );
