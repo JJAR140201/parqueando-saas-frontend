@@ -132,7 +132,7 @@ export class OperatorDashboardPageComponent {
     const placa = this.salidaForm.controls.placa.value.toUpperCase();
 
     this.parkingService
-      .previsualizarSalida(placa)
+      .registrarSalida({ placa })
       .pipe(finalize(() => this.loadingSalida.set(false)))
       .subscribe({
         next: (resumen) => this.resumenSalida.set(resumen),
@@ -148,32 +148,18 @@ export class OperatorDashboardPageComponent {
   }
 
   confirmarSalida(): void {
-    const placa = this.salidaForm.controls.placa.value.toUpperCase();
-    if (!placa) {
+    const resumen = this.resumenSalida();
+    if (!resumen) {
       return;
     }
 
-    this.loadingSalida.set(true);
-    this.parkingService
-      .registrarSalida({ placa })
-      .pipe(finalize(() => this.loadingSalida.set(false)))
-      .subscribe({
-        next: () => {
-          this.toastService.show({
-            title: 'Salida registrada',
-            description: `Vehiculo ${placa} retirado con exito.`,
-            type: 'success'
-          });
-          this.salidaForm.reset({ placa: '' });
-          this.resumenSalida.set(null);
-        },
-        error: () => {
-          this.toastService.show({
-            title: 'No se pudo registrar salida',
-            description: 'Intenta nuevamente en unos segundos.',
-            type: 'error'
-          });
-        }
-      });
+    this.toastService.show({
+      title: 'Salida registrada',
+      description: `Vehiculo ${resumen.placa} retirado. Total: $${resumen.total}`,
+      type: 'success'
+    });
+    this.salidaForm.reset({ placa: '' });
+    this.resumenSalida.set(null);
   }
+
 }
