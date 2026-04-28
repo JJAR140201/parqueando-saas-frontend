@@ -21,7 +21,7 @@ interface NavItem {
       <div class="mx-auto grid min-h-[calc(100vh-1.5rem)] max-w-7xl grid-cols-1 gap-4 lg:grid-cols-[260px_1fr]">
         <aside class="app-surface p-4 lg:p-5">
           <div class="mb-6 border-b border-slate-200 pb-4">
-            <p class="text-xs uppercase tracking-[0.16em] text-slate-500">Parking SaaS</p>
+            <p class="text-xs uppercase tracking-[0.16em] text-slate-500">Parqueando</p>
             <h1 class="text-lg font-semibold text-slate-900">Operacion</h1>
           </div>
 
