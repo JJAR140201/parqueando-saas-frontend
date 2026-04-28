@@ -22,7 +22,7 @@ const roleHome: Record<Role, string> = {
       <div class="mx-auto grid min-h-[88vh] max-w-5xl animate-fade-in-up grid-cols-1 overflow-hidden rounded-3xl bg-white shadow-card lg:grid-cols-[1.2fr_1fr]">
         <div class="hidden bg-slate-900 p-10 text-white lg:block">
           <span class="mb-6 inline-flex rounded-full bg-cyan-500/20 px-3 py-1 text-xs font-semibold text-cyan-200">
-            Parking SaaS Suite
+            Parqueando
           </span>
           <h1 class="text-3xl font-semibold leading-tight">Control total de operación, facturación y seguridad.</h1>
           <p class="mt-4 text-sm text-slate-300">
