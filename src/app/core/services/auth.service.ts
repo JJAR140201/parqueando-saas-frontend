@@ -22,7 +22,13 @@ export class AuthService {
   }
 
   register(payload: RegisterRequest): Observable<unknown> {
-    return this.http.post(`${this.baseUrl}/register`, payload);
+    return this.http.post(`${this.baseUrl}/register`, {
+      username: payload.username,
+      password: payload.password,
+      rol: payload.role,
+      empresaId: payload.empresaId,
+      sedeId: payload.sedeId
+    });
   }
 
   logout(): void {

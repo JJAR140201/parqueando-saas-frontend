@@ -22,11 +22,11 @@ export class CompanyService {
   }
 
   create(payload: CompanyPayload): Observable<Company> {
-    return this.http.post<Company>(this.baseUrl, payload);
+    return this.http.post<Company>(this.baseUrl, this.toApiCompanyPayload(payload));
   }
 
   update(companyId: number, payload: CompanyPayload): Observable<Company> {
-    return this.http.put<Company>(`${this.baseUrl}/${companyId}`, payload);
+    return this.http.put<Company>(`${this.baseUrl}/${companyId}`, this.toApiCompanyPayload(payload));
   }
 
   delete(companyId: number): Observable<void> {
@@ -68,7 +68,19 @@ export class CompanyService {
     return {
       id: this.toNumber(sede['id'] ?? sede['sedeId']),
       nombre: String(sede['nombre'] ?? sede['nombreSede'] ?? ''),
-      capacidad: this.toNumber(sede['capacidad'] ?? sede['capacidadMaxima'])
+      capacidad: this.toNumber(sede['capacidad'] ?? sede['capacidadTotal'] ?? sede['capacidadMaxima'])
+    };
+  }
+
+  private toApiCompanyPayload(payload: CompanyPayload): Record<string, unknown> {
+    return {
+      nit: payload.nit,
+      nombre: payload.nombre,
+      sedes: payload.sedes.map((sede) => ({
+        id: sede.id,
+        nombre: sede.nombre,
+        capacidadTotal: sede.capacidad
+      }))
     };
   }
 

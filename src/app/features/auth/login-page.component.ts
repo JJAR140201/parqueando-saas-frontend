@@ -52,7 +52,22 @@ const roleHome: Record<Role, string> = {
 
             <label class="block space-y-1">
               <span class="text-sm font-medium text-slate-700">Password</span>
-              <input class="input-base" type="password" formControlName="password" placeholder="********" />
+              <div class="relative">
+                <input
+                  class="input-base pr-10"
+                  [type]="showPassword() ? 'text' : 'password'"
+                  formControlName="password"
+                  placeholder="********"
+                />
+                <button
+                  class="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-slate-500 hover:text-slate-700"
+                  type="button"
+                  (click)="showPassword.set(!showPassword())"
+                  [attr.aria-label]="showPassword() ? 'Ocultar password' : 'Mostrar password'"
+                >
+                  <i class="fa-solid" [class.fa-eye]="!showPassword()" [class.fa-eye-slash]="showPassword()"></i>
+                </button>
+              </div>
               <small class="text-xs text-rose-500" *ngIf="form.controls.password.invalid && form.controls.password.touched">
                 El password es obligatorio.
               </small>
@@ -74,6 +89,7 @@ export class LoginPageComponent {
   private readonly toastService = inject(ToastService);
 
   readonly loading = signal(false);
+  readonly showPassword = signal(false);
 
   readonly form = this.fb.nonNullable.group({
     username: ['', Validators.required],
