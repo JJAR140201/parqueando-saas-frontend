@@ -58,7 +58,7 @@ import { ToastService } from '../../core/services/toast.service';
         </label>
 
         <div class="flex items-end gap-2">
-          <button class="btn-primary" type="button" (click)="loadRows()" [disabled]="loading() || filterForm.invalid">
+          <button class="btn-primary" type="button" (click)="loadRows()" [disabled]="loading() || (isSuperAdmin() && filterForm.invalid)">
             {{ loading() ? 'Consultando...' : 'Listar' }}
           </button>
           <button class="btn-secondary" type="button" (click)="openCreate()">Nueva</button>
@@ -240,7 +240,9 @@ export class MensualidadesPageComponent {
   }
 
   loadRows(): void {
-    if (this.filterForm.invalid) {
+    // For OPERARIO/ADMIN, always allow loading with current empresa/sede from authStore
+    // even if form validation fails (empresaId will come from currentEmpresaId())
+    if (this.isSuperAdmin() && this.filterForm.invalid) {
       this.filterForm.markAllAsTouched();
       return;
     }
@@ -432,14 +434,16 @@ export class MensualidadesPageComponent {
         }
 
         const empresaId = this.currentEmpresaId();
-        if (!empresaId) {
+        if (!empresaId || empresaId <= 0) {
           this.toastService.show({
             title: 'Sesion incompleta',
             description: 'No se encontro empresa anclada para este usuario.',
             type: 'error'
           });
+          console.error('[MensualidadesPage] Missing empresaId - authStore:', this.authStore.empresaId(), 'filterForm:', this.filterForm.controls.empresaId.value);
           return;
         }
+        console.log('[MensualidadesPage] initializeScope - empresaId:', empresaId);
 
         this.filterForm.patchValue({ empresaId });
         this.editForm.patchValue({ empresaId });

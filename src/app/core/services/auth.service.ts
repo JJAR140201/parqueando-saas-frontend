@@ -53,6 +53,7 @@ export class AuthService {
       tokenName ??
       username
     );
+    console.log('[Auth] Session mapped - nombre:', nombre, 'username:', username, 'role:', role, 'empresaId:', empresaId, 'sedeId:', sedeId);
 
     return {
       accessToken,
