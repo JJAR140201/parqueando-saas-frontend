@@ -6,6 +6,7 @@ export interface LoginRequest {
 }
 
 export interface RegisterRequest {
+  nombre?: string;
   username: string;
   password: string;
   role: Role;
@@ -20,4 +21,5 @@ export interface SessionUser {
   usuarioId: number | null;
   role: Role;
   username: string;
+  nombre: string;
 }

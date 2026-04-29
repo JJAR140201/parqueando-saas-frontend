@@ -36,6 +36,7 @@ export class UserService {
 
   createUser(payload: CreateUserPayload): Observable<AppUser> {
     const requestPayload = {
+      nombre: payload.nombre,
       username: payload.username,
       password: payload.password,
       rol: payload.role,
@@ -75,11 +76,20 @@ export class UserService {
 
     return {
       id: this.toNumberOrUndefined(user['id'] ?? user['usuarioId']),
+      nombre: this.toStringOrUndefined(user['nombre'] ?? user['name']),
       username: String(user['username'] ?? user['usuario'] ?? ''),
       role: String(user['role'] ?? user['rol'] ?? 'OPERARIO') as AppUser['role'],
       empresaId: this.toNumber(user['empresaId']),
       sedeId: this.toNumber(user['sedeId'])
     };
+  }
+
+  private toStringOrUndefined(value: unknown): string | undefined {
+    if (value === null || value === undefined || value === '') {
+      return undefined;
+    }
+
+    return String(value);
   }
 
   private toNumber(value: unknown): number {

@@ -42,7 +42,7 @@ interface NavItem {
           <header class="app-surface flex flex-wrap items-center justify-between gap-3 px-5 py-4">
             <div>
               <p class="text-xs uppercase tracking-[0.16em] text-slate-500">Usuario actual</p>
-              <h2 class="text-lg font-semibold text-slate-900">{{ authStore.username() || 'Invitado' }}</h2>
+              <h2 class="text-lg font-semibold text-slate-900">{{ authStore.displayName() || 'Invitado' }}</h2>
             </div>
 
             <div class="flex items-center gap-2">

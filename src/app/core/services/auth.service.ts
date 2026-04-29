@@ -23,6 +23,7 @@ export class AuthService {
 
   register(payload: RegisterRequest): Observable<unknown> {
     return this.http.post(`${this.baseUrl}/register`, {
+      nombre: payload.nombre,
       username: payload.username,
       password: payload.password,
       rol: payload.role,
@@ -43,6 +44,7 @@ export class AuthService {
     const usuarioId = this.toNumberOrNull(body['usuarioId'] ?? body['id']);
     const role = String(body['role'] ?? body['rol'] ?? 'OPERARIO') as Role;
     const username = String(body['username'] ?? body['usuario'] ?? fallbackUsername);
+    const nombre = String(body['nombre'] ?? body['name'] ?? username);
 
     return {
       accessToken,
@@ -50,7 +52,8 @@ export class AuthService {
       sedeId,
       usuarioId,
       role,
-      username
+      username,
+      nombre
     };
   }
 

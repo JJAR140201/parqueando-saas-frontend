@@ -11,6 +11,8 @@ export class AuthStoreService {
   readonly token = computed(() => this.session()?.accessToken ?? '');
   readonly role = computed<Role>(() => this.session()?.role ?? defaultRole);
   readonly username = computed(() => this.session()?.username ?? '');
+  readonly nombre = computed(() => this.session()?.nombre ?? '');
+  readonly displayName = computed(() => this.session()?.nombre || this.session()?.username || '');
   readonly empresaId = computed(() => this.session()?.empresaId ?? null);
   readonly sedeId = computed(() => this.session()?.sedeId ?? null);
   readonly usuarioId = computed(() => this.session()?.usuarioId ?? null);
@@ -21,6 +23,7 @@ export class AuthStoreService {
     this.safeStorageSet(STORAGE_KEYS.token, session.accessToken);
     this.safeStorageSet(STORAGE_KEYS.role, session.role);
     this.safeStorageSet(STORAGE_KEYS.username, session.username);
+    this.safeStorageSet(STORAGE_KEYS.nombre, session.nombre);
     this.safeStorageSet(STORAGE_KEYS.empresaId, String(session.empresaId ?? ''));
     this.safeStorageSet(STORAGE_KEYS.sedeId, String(session.sedeId ?? ''));
     this.safeStorageSet(STORAGE_KEYS.usuarioId, String(session.usuarioId ?? ''));
@@ -31,6 +34,7 @@ export class AuthStoreService {
     this.safeStorageRemove(STORAGE_KEYS.token);
     this.safeStorageRemove(STORAGE_KEYS.role);
     this.safeStorageRemove(STORAGE_KEYS.username);
+    this.safeStorageRemove(STORAGE_KEYS.nombre);
     this.safeStorageRemove(STORAGE_KEYS.empresaId);
     this.safeStorageRemove(STORAGE_KEYS.sedeId);
     this.safeStorageRemove(STORAGE_KEYS.usuarioId);
@@ -48,6 +52,7 @@ export class AuthStoreService {
 
     const role = (localStorage.getItem(STORAGE_KEYS.role) as Role | null) ?? defaultRole;
     const username = localStorage.getItem(STORAGE_KEYS.username) ?? '';
+    const nombre = localStorage.getItem(STORAGE_KEYS.nombre) ?? username;
     const empresaIdRaw = localStorage.getItem(STORAGE_KEYS.empresaId);
     const sedeIdRaw = localStorage.getItem(STORAGE_KEYS.sedeId);
     const usuarioIdRaw = localStorage.getItem(STORAGE_KEYS.usuarioId);
@@ -56,6 +61,7 @@ export class AuthStoreService {
       accessToken,
       role,
       username,
+      nombre,
       empresaId: empresaIdRaw ? Number(empresaIdRaw) : null,
       sedeId: sedeIdRaw ? Number(sedeIdRaw) : null,
       usuarioId: usuarioIdRaw ? Number(usuarioIdRaw) : null

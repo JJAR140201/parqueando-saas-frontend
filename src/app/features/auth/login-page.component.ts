@@ -110,7 +110,7 @@ export class LoginPageComponent {
         next: (session) => {
           this.toastService.show({
             title: 'Sesion iniciada',
-            description: `Bienvenido ${session.username}`,
+            description: `Bienvenido ${session.nombre || session.username}`,
             type: 'success'
           });
           void this.router.navigateByUrl(roleHome[session.role]);

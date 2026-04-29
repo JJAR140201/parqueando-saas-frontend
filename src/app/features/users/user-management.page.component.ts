@@ -22,6 +22,11 @@ import { UserService } from '../../core/services/user.service';
 
       <form class="grid grid-cols-1 gap-3 rounded-xl border border-slate-200 p-4 sm:grid-cols-2 lg:grid-cols-3" [formGroup]="form" (ngSubmit)="save()">
         <label class="space-y-1">
+          <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Nombre</span>
+          <input class="input-base" formControlName="nombre" />
+        </label>
+
+        <label class="space-y-1">
           <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Username</span>
           <input class="input-base" formControlName="username" />
         </label>
@@ -77,6 +82,7 @@ import { UserService } from '../../core/services/user.service';
         <table class="min-w-full divide-y divide-slate-200 text-sm">
           <thead class="bg-slate-50 text-left text-slate-600">
             <tr>
+              <th class="px-4 py-3 font-semibold">Nombre</th>
               <th class="px-4 py-3 font-semibold">Usuario</th>
               <th class="px-4 py-3 font-semibold">Rol</th>
               <th class="px-4 py-3 font-semibold">Empresa</th>
@@ -85,6 +91,7 @@ import { UserService } from '../../core/services/user.service';
           </thead>
           <tbody class="divide-y divide-slate-100 bg-white">
             <tr *ngFor="let user of users()">
+              <td class="px-4 py-3">{{ user.nombre || '-' }}</td>
               <td class="px-4 py-3">{{ user.username }}</td>
               <td class="px-4 py-3"><span class="badge-role">{{ user.role }}</span></td>
               <td class="px-4 py-3">{{ getCompanyName(user.empresaId) }}</td>
@@ -111,6 +118,7 @@ export class UserManagementPageComponent {
   readonly roles: Role[] = ['ADMIN', 'OPERARIO'];
 
   readonly form = this.fb.nonNullable.group({
+    nombre: ['', Validators.required],
     username: ['', Validators.required],
     password: ['', [Validators.required, Validators.minLength(6)]],
     role: ['OPERARIO' as Role, Validators.required],
@@ -168,7 +176,7 @@ export class UserManagementPageComponent {
             type: 'success'
           });
           this.onCompanyChange();
-          this.form.patchValue({ username: '', password: '', role: 'OPERARIO' });
+          this.form.patchValue({ nombre: '', username: '', password: '', role: 'OPERARIO' });
         },
         error: () => this.errorToast('No fue posible crear el usuario.')
       });

@@ -4,5 +4,6 @@ export const STORAGE_KEYS = {
   sedeId: 'parking_sede_id',
   usuarioId: 'parking_usuario_id',
   role: 'parking_user_role',
-  username: 'parking_username'
+  username: 'parking_username',
+  nombre: 'parking_nombre'
 } as const;
