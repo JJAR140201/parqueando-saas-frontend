@@ -65,6 +65,15 @@ import { ToastService } from '../../core/services/toast.service';
         </div>
       </form>
 
+      <div class="flex flex-wrap gap-2">
+        <button class="btn-secondary" type="button" (click)="downloadExcel()" [disabled]="loading() || filterForm.invalid">
+          <i class="fa-solid fa-file-excel mr-2"></i>Exportar Excel
+        </button>
+        <button class="btn-secondary" type="button" (click)="downloadPdf()" [disabled]="loading() || filterForm.invalid">
+          <i class="fa-solid fa-file-pdf mr-2"></i>Exportar PDF
+        </button>
+      </div>
+
       <form class="grid grid-cols-1 gap-3 rounded-xl border border-slate-200 p-4 sm:grid-cols-2 lg:grid-cols-4" [formGroup]="editForm" (ngSubmit)="save()">
         <label class="space-y-1">
           <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Placa</span>
@@ -265,6 +274,14 @@ export class MensualidadesPageComponent {
       });
   }
 
+  downloadExcel(): void {
+    this.downloadFile('excel', 'mensualidades.xlsx');
+  }
+
+  downloadPdf(): void {
+    this.downloadFile('pdf', 'mensualidades.pdf');
+  }
+
   openCreate(): void {
     this.editingId.set(null);
     this.editForm.reset({
@@ -456,6 +473,45 @@ export class MensualidadesPageComponent {
         });
       }
     });
+  }
+
+  private downloadFile(type: 'excel' | 'pdf', fileName: string): void {
+    if (this.filterForm.invalid) {
+      this.filterForm.markAllAsTouched();
+      return;
+    }
+
+    this.loading.set(true);
+    const request = type === 'excel'
+      ? this.mensualidadService.downloadExcel(this.filterPayload())
+      : this.mensualidadService.downloadPdf(this.filterPayload());
+
+    request.pipe(finalize(() => this.loading.set(false))).subscribe({
+      next: (blob) => {
+        this.triggerDownload(blob, fileName);
+        this.toastService.show({
+          title: 'Descarga iniciada',
+          description: `Se genero ${fileName} correctamente.`,
+          type: 'success'
+        });
+      },
+      error: () => {
+        this.toastService.show({
+          title: 'Descarga fallida',
+          description: `No fue posible generar ${fileName}.`,
+          type: 'error'
+        });
+      }
+    });
+  }
+
+  private triggerDownload(blob: Blob, fileName: string): void {
+    const url = window.URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = fileName;
+    anchor.click();
+    window.URL.revokeObjectURL(url);
   }
 
   private filterPayload(): { empresaId?: number; sedeId?: number; placa?: string } {

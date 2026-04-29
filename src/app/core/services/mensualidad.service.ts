@@ -15,10 +15,32 @@ export class MensualidadService {
   }
 
   list(filters: MensualidadFilters): Observable<MensualidadItem[]> {
+    const params = this.buildParams(filters);
+    return this.http.get<unknown>(this.baseUrl, { params }).pipe(map((rows) => this.normalizeArray(rows)));
+  }
+
+  downloadExcel(filters: MensualidadFilters): Observable<Blob> {
+    const params = this.buildParams(filters);
+    return this.http.get(`${this.baseUrl}/export/excel`, { params, responseType: 'blob' });
+  }
+
+  downloadPdf(filters: MensualidadFilters): Observable<Blob> {
+    const params = this.buildParams(filters);
+    return this.http.get(`${this.baseUrl}/export/pdf`, { params, responseType: 'blob' });
+  }
+
+  update(id: number, payload: MensualidadPayload): Observable<MensualidadItem> {
+    return this.http.put<unknown>(`${this.baseUrl}/${id}`, payload).pipe(map((row) => this.normalizeItem(row)));
+  }
+
+  cancel(id: number, empresaId: number, sedeId: number): Observable<void> {
+    const params = new HttpParams().set('empresaId', empresaId).set('sedeId', sedeId);
+    return this.http.delete<void>(`${this.baseUrl}/${id}`, { params });
+  }
+
+  private buildParams(filters: MensualidadFilters): HttpParams {
     let params = new HttpParams();
 
-    // Para SUPER_ADMIN: empresaId es opcional. Si no se envía, el backend retorna TODAS las mensualidades.
-    // Para ADMIN/OPERARIO: empresaId siempre viene del contexto de sesión.
     if (filters.empresaId && filters.empresaId > 0) {
       params = params.set('empresaId', String(filters.empresaId));
     }
@@ -31,16 +53,7 @@ export class MensualidadService {
       params = params.set('placa', filters.placa.toUpperCase());
     }
 
-    return this.http.get<unknown>(this.baseUrl, { params }).pipe(map((rows) => this.normalizeArray(rows)));
-  }
-
-  update(id: number, payload: MensualidadPayload): Observable<MensualidadItem> {
-    return this.http.put<unknown>(`${this.baseUrl}/${id}`, payload).pipe(map((row) => this.normalizeItem(row)));
-  }
-
-  cancel(id: number, empresaId: number, sedeId: number): Observable<void> {
-    const params = new HttpParams().set('empresaId', empresaId).set('sedeId', sedeId);
-    return this.http.delete<void>(`${this.baseUrl}/${id}`, { params });
+    return params;
   }
 
   private normalizeArray(raw: unknown): MensualidadItem[] {
