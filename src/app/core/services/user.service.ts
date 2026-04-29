@@ -11,14 +11,20 @@ export class UserService {
 
   constructor(private readonly http: HttpClient) {}
 
-  getUsersByCompany(companyId: number): Observable<AppUser[]> {
-    const params = new HttpParams().set('empresaId', companyId);
+  getUsersByCompany(companyId: number, options?: { sedeId?: number; role?: 'ADMIN' | 'OPERARIO' | 'SUPER_ADMIN' }): Observable<AppUser[]> {
+    let params = new HttpParams().set('empresaId', companyId);
+    if (options?.sedeId && options.sedeId > 0) {
+      params = params.set('sedeId', options.sedeId);
+    }
+    if (options?.role) {
+      params = params.set('rol', options.role);
+    }
 
     return this.http.get<unknown>(this.listUsersUrl, { params }).pipe(
       map((users) => this.normalizeUserArray(users)),
       catchError(() =>
         this.http
-          .get<unknown>(`${this.listUsersUrl}/empresa/${companyId}`)
+          .get<unknown>(`${this.listUsersUrl}/empresa/${companyId}`, { params })
           .pipe(
             map((users) => this.normalizeUserArray(users)),
             catchError(() =>

@@ -1,10 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { finalize } from 'rxjs';
+import { catchError, finalize, forkJoin, map, of } from 'rxjs';
 import { Role } from '../../core/models/auth.models';
 import { Company } from '../../core/models/company.models';
 import { AppUser } from '../../core/models/user.models';
+import { AuthStoreService } from '../../core/services/auth-store.service';
 import { CompanyService } from '../../core/services/company.service';
 import { ToastService } from '../../core/services/toast.service';
 import { UserService } from '../../core/services/user.service';
@@ -17,7 +18,9 @@ import { UserService } from '../../core/services/user.service';
     <section class="space-y-5">
       <header>
         <h3 class="text-xl font-semibold text-slate-900">Gestion de Usuarios</h3>
-        <p class="text-sm text-slate-500">Crear usuarios por empresa y sede con control de roles.</p>
+        <p class="text-sm text-slate-500">
+          {{ isSuperAdmin() ? 'SUPER_ADMIN: visualiza todos los usuarios del sistema.' : 'ADMIN: visualiza operarios de su empresa y sedes.' }}
+        </p>
       </header>
 
       <form class="grid grid-cols-1 gap-3 rounded-xl border border-slate-200 p-4 sm:grid-cols-2 lg:grid-cols-3" [formGroup]="form" (ngSubmit)="save()">
@@ -52,14 +55,14 @@ import { UserService } from '../../core/services/user.service';
 
         <label class="space-y-1">
           <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Rol</span>
-          <select class="input-base" formControlName="role">
+          <select class="input-base" formControlName="role" [disabled]="isAdmin()">
             <option *ngFor="let role of roles" [value]="role">{{ role }}</option>
           </select>
         </label>
 
         <label class="space-y-1">
           <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Empresa</span>
-          <select class="input-base" formControlName="empresaId" (change)="onCompanyChange()">
+          <select class="input-base" formControlName="empresaId" (change)="onCompanyChange()" [disabled]="isAdmin()">
             <option value="">Selecciona</option>
             <option *ngFor="let company of companies()" [value]="company.id">{{ company.nombre }}</option>
           </select>
@@ -97,6 +100,9 @@ import { UserService } from '../../core/services/user.service';
               <td class="px-4 py-3">{{ getCompanyName(user.empresaId) }}</td>
               <td class="px-4 py-3">{{ getSedeName(user.sedeId) }}</td>
             </tr>
+            <tr *ngIf="!users().length && !loading()">
+              <td class="px-4 py-8 text-center text-slate-500" colspan="5">No hay usuarios para el alcance actual.</td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -108,14 +114,19 @@ export class UserManagementPageComponent {
   private readonly userService = inject(UserService);
   private readonly companyService = inject(CompanyService);
   private readonly toastService = inject(ToastService);
+  private readonly authStore = inject(AuthStoreService);
 
   readonly loading = signal(false);
   readonly showPassword = signal(false);
   readonly companies = signal<Company[]>([]);
   readonly sedes = signal<Array<{ id?: number; nombre: string }>>([]);
   readonly users = signal<AppUser[]>([]);
+  readonly sedeNames = signal<Record<number, string>>({});
 
-  readonly roles: Role[] = ['ADMIN', 'OPERARIO'];
+  readonly isSuperAdmin = computed(() => this.authStore.role() === 'SUPER_ADMIN');
+  readonly isAdmin = computed(() => this.authStore.role() === 'ADMIN');
+
+  readonly roles: Role[] = this.isSuperAdmin() ? ['ADMIN', 'OPERARIO'] : ['OPERARIO'];
 
   readonly form = this.fb.nonNullable.group({
     nombre: ['', Validators.required],
@@ -127,34 +138,130 @@ export class UserManagementPageComponent {
   });
 
   constructor() {
+    this.initializeScope();
+  }
+
+  private initializeScope(): void {
     this.loadCompanies();
+
+    if (this.isAdmin()) {
+      const empresaId = this.authStore.empresaId() ?? 0;
+      if (empresaId > 0) {
+        this.form.patchValue({
+          role: 'OPERARIO',
+          empresaId
+        });
+      }
+    }
   }
 
   loadCompanies(): void {
     this.companyService.getAll().subscribe({
-      next: (companies) => this.companies.set(companies),
+      next: (companies) => {
+        this.companies.set(companies);
+
+        if (this.isSuperAdmin()) {
+          this.loadAllUsersForSuperAdmin(companies);
+          return;
+        }
+
+        if (this.isAdmin()) {
+          const empresaId = this.authStore.empresaId() ?? 0;
+          if (empresaId > 0) {
+            this.loadSedesAndUsersForAdmin(empresaId);
+          }
+        }
+      },
       error: () => this.errorToast('No se pudo cargar el listado de empresas.')
     });
   }
 
+  private loadAllUsersForSuperAdmin(companies: Company[]): void {
+    const companyIds = companies.map((company) => company.id).filter((id): id is number => Boolean(id));
+    if (!companyIds.length) {
+      this.users.set([]);
+      return;
+    }
+
+    const usersRequests = companyIds.map((companyId) =>
+      this.userService.getUsersByCompany(companyId).pipe(catchError(() => of([] as AppUser[])))
+    );
+
+    const sedesRequests = companyIds.map((companyId) =>
+      this.companyService.getSedesByCompany(companyId).pipe(catchError(() => of([])))
+    );
+
+    forkJoin({ usersByCompany: forkJoin(usersRequests), sedesByCompany: forkJoin(sedesRequests) }).subscribe({
+      next: ({ usersByCompany, sedesByCompany }) => {
+        const allUsers = usersByCompany.flat();
+        const uniqueByKey = new Map<string, AppUser>();
+        allUsers.forEach((user) => {
+          const key = user.id ? `id-${user.id}` : `${user.username}-${user.empresaId}-${user.sedeId}`;
+          uniqueByKey.set(key, user);
+        });
+        this.users.set(Array.from(uniqueByKey.values()));
+
+        const nextSedeNames: Record<number, string> = {};
+        sedesByCompany.flat().forEach((sede) => {
+          if (sede.id) {
+            nextSedeNames[sede.id] = sede.nombre;
+          }
+        });
+        this.sedeNames.set(nextSedeNames);
+      },
+      error: () => this.errorToast('No se pudo cargar el listado global de usuarios.')
+    });
+  }
+
+  private loadSedesAndUsersForAdmin(companyId: number): void {
+    this.form.patchValue({ empresaId: companyId });
+    this.companyService.getSedesByCompany(companyId).subscribe({
+      next: (sedes) => {
+        this.sedes.set(sedes);
+        const nextSedeNames: Record<number, string> = {};
+        sedes.forEach((sede) => {
+          if (sede.id) {
+            nextSedeNames[sede.id] = sede.nombre;
+          }
+        });
+        this.sedeNames.set(nextSedeNames);
+      },
+      error: () => this.errorToast('No se pudieron cargar las sedes de la empresa.')
+    });
+
+    this.userService.getUsersByCompany(companyId).pipe(
+      map((users) => users.filter((user) => user.role === 'OPERARIO'))
+    ).subscribe({
+      next: (users) => this.users.set(users),
+      error: () => this.errorToast('No se pudo cargar el listado de usuarios.')
+    });
+  }
+
   onCompanyChange(): void {
+    if (this.isAdmin()) {
+      return;
+    }
+
     const companyId = Number(this.form.controls.empresaId.value);
     if (!companyId) {
       this.sedes.set([]);
-      this.users.set([]);
       this.form.patchValue({ sedeId: 0 });
       return;
     }
 
     this.form.patchValue({ sedeId: 0 });
     this.companyService.getSedesByCompany(companyId).subscribe({
-      next: (sedes) => this.sedes.set(sedes),
+      next: (sedes) => {
+        this.sedes.set(sedes);
+        const nextSedeNames: Record<number, string> = {};
+        sedes.forEach((sede) => {
+          if (sede.id) {
+            nextSedeNames[sede.id] = sede.nombre;
+          }
+        });
+        this.sedeNames.set(nextSedeNames);
+      },
       error: () => this.errorToast('No se pudieron cargar las sedes de la empresa.')
-    });
-
-    this.userService.getUsersByCompany(companyId).subscribe({
-      next: (users) => this.users.set(users),
-      error: () => this.errorToast('No se pudo cargar el listado de usuarios.')
     });
   }
 
@@ -175,7 +282,16 @@ export class UserManagementPageComponent {
             description: 'El usuario fue registrado correctamente.',
             type: 'success'
           });
-          this.onCompanyChange();
+
+          if (this.isSuperAdmin()) {
+            this.loadAllUsersForSuperAdmin(this.companies());
+          } else {
+            const companyId = this.authStore.empresaId() ?? 0;
+            if (companyId > 0) {
+              this.loadSedesAndUsersForAdmin(companyId);
+            }
+          }
+
           this.form.patchValue({ nombre: '', username: '', password: '', role: 'OPERARIO' });
         },
         error: () => this.errorToast('No fue posible crear el usuario.')
@@ -195,6 +311,6 @@ export class UserManagementPageComponent {
   }
 
   getSedeName(sedeId: number): string {
-    return this.sedes().find((sede) => sede.id === sedeId)?.nombre ?? `Sede #${sedeId}`;
+    return this.sedeNames()[sedeId] ?? this.sedes().find((sede) => sede.id === sedeId)?.nombre ?? `Sede #${sedeId}`;
   }
 }
