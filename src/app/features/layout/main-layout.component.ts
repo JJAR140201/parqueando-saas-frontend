@@ -74,6 +74,12 @@ export class MainLayoutComponent {
       roles: ['SUPER_ADMIN']
     },
     {
+      label: 'Tarifas',
+      route: '/app/tarifas',
+      icon: 'fa-solid fa-tags',
+      roles: ['SUPER_ADMIN']
+    },
+    {
       label: 'Usuarios',
       route: '/app/usuarios',
       icon: 'fa-solid fa-users-gear',

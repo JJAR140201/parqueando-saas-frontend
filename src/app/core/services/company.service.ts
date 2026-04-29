@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { catchError, forkJoin, map, Observable, of, switchMap, throwError } from 'rxjs';
+import { catchError, map, Observable, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Company, CompanyPayload, Sede } from '../models/company.models';
 
@@ -30,15 +30,13 @@ export class CompanyService {
 
   create(payload: CompanyPayload): Observable<Company> {
     return this.http.post<unknown>(this.baseUrl, this.toApiCompanyPayload(payload)).pipe(
-      map((company) => this.normalizeCompany(company)),
-      switchMap((company) => this.syncTarifas(company, payload))
+      map((company) => this.normalizeCompany(company))
     );
   }
 
   update(companyId: number, payload: CompanyPayload): Observable<Company> {
     return this.http.put<unknown>(`${this.baseUrl}/${companyId}`, this.toApiCompanyPayload(payload)).pipe(
-      map((company) => this.normalizeCompany(company)),
-      switchMap((company) => this.syncTarifas(company, payload))
+      map((company) => this.normalizeCompany(company))
     );
   }
 
@@ -120,35 +118,6 @@ export class CompanyService {
     }
 
     return [];
-  }
-
-  private syncTarifas(company: Company, payload: CompanyPayload): Observable<Company> {
-    if (!company.id || !payload.sedes.length) {
-      return of(company);
-    }
-
-    const sedes = company.sedes ?? [];
-    const requests = payload.sedes
-      .map((sedePayload, index) => {
-        const sedeId = sedePayload.id ?? sedes[index]?.id;
-        if (!sedeId) {
-          return null;
-        }
-
-        return this.configureTarifas(company.id as number, sedeId, {
-          valorFraccionCarro: sedePayload.valorFraccionCarro ?? 0,
-          minutosFraccionCarro: sedePayload.minutosFraccionCarro ?? 0,
-          valorFraccionMoto: sedePayload.valorFraccionMoto ?? 0,
-          minutosFraccionMoto: sedePayload.minutosFraccionMoto ?? 0
-        });
-      })
-      .filter((request): request is Observable<void> => request !== null);
-
-    if (!requests.length) {
-      return of(company);
-    }
-
-    return forkJoin(requests).pipe(map(() => company));
   }
 
   private toNumber(value: unknown): number {

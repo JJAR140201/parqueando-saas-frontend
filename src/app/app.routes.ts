@@ -7,6 +7,7 @@ import { MensualidadesPageComponent } from './features/mensualidades/mensualidad
 import { OperatorDashboardPageComponent } from './features/operator/operator-dashboard.page.component';
 import { ParkingReportsPageComponent } from './features/reports/parking-reports.page.component';
 import { CompanyManagementPageComponent } from './features/super-admin/company-management.page.component';
+import { CompanyTariffsPageComponent } from './features/super-admin/company-tariffs.page.component';
 import { UserManagementPageComponent } from './features/users/user-management.page.component';
 
 export const routes: Routes = [
@@ -22,6 +23,12 @@ export const routes: Routes = [
 			{
 				path: 'empresas',
 				component: CompanyManagementPageComponent,
+				canActivate: [roleGuard],
+				data: { roles: ['SUPER_ADMIN'] }
+			},
+			{
+				path: 'tarifas',
+				component: CompanyTariffsPageComponent,
 				canActivate: [roleGuard],
 				data: { roles: ['SUPER_ADMIN'] }
 			},

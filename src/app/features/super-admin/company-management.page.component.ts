@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { Company, CompanyPayload } from '../../core/models/company.models';
 import { CompanyService } from '../../core/services/company.service';
@@ -17,9 +18,14 @@ import { ToastService } from '../../core/services/toast.service';
           <h3 class="text-xl font-semibold text-slate-900">Empresas</h3>
           <p class="text-sm text-slate-500">CRUD de empresas y sedes para super administracion.</p>
         </div>
-        <button class="btn-primary" type="button" (click)="openCreate()">
-          <i class="fa-solid fa-plus mr-2"></i>Nueva empresa
-        </button>
+        <div class="flex flex-wrap gap-2">
+          <button class="btn-secondary" type="button" (click)="goToTarifas()">
+            <i class="fa-solid fa-tags mr-2"></i>Configurar tarifas
+          </button>
+          <button class="btn-primary" type="button" (click)="openCreate()">
+            <i class="fa-solid fa-plus mr-2"></i>Nueva empresa
+          </button>
+        </div>
       </header>
 
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto]">
@@ -48,6 +54,7 @@ import { ToastService } from '../../core/services/toast.service';
               <td class="px-4 py-3 text-slate-700">{{ company.nombre }}</td>
               <td class="px-4 py-3 text-slate-700">{{ getSedesLabel(company) }}</td>
               <td class="px-4 py-3 text-right">
+                <button class="btn-secondary mr-2" (click)="goToTarifas(company.id)">Tarifas</button>
                 <button class="btn-secondary mr-2" (click)="openEdit(company)">Editar</button>
                 <button class="rounded-lg bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-600" (click)="remove(company)">
                   Eliminar
@@ -97,24 +104,6 @@ import { ToastService } from '../../core/services/toast.service';
                   </button>
                 </div>
 
-                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                  <label class="space-y-1">
-                    <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Tarifa carro</span>
-                    <input class="input-base" type="number" min="0" formControlName="valorFraccionCarro" />
-                  </label>
-                  <label class="space-y-1">
-                    <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Minutos carro</span>
-                    <input class="input-base" type="number" min="0" formControlName="minutosFraccionCarro" />
-                  </label>
-                  <label class="space-y-1">
-                    <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Tarifa moto</span>
-                    <input class="input-base" type="number" min="0" formControlName="valorFraccionMoto" />
-                  </label>
-                  <label class="space-y-1">
-                    <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Minutos moto</span>
-                    <input class="input-base" type="number" min="0" formControlName="minutosFraccionMoto" />
-                  </label>
-                </div>
               </div>
             </div>
 
@@ -134,6 +123,7 @@ export class CompanyManagementPageComponent {
   private readonly fb = inject(FormBuilder);
   private readonly companyService = inject(CompanyService);
   private readonly toastService = inject(ToastService);
+  private readonly router = inject(Router);
 
   readonly loading = signal(false);
   readonly companies = signal<Company[]>([]);
@@ -186,13 +176,8 @@ export class CompanyManagementPageComponent {
       companySedes.forEach((sede) => {
         this.sedes.push(
           this.fb.nonNullable.group({
-            id: [sede.id ?? 0],
             nombre: [sede.nombre, Validators.required],
-            capacidad: [sede.capacidad, [Validators.required, Validators.min(1)]],
-            valorFraccionCarro: [sede.valorFraccionCarro ?? 0, [Validators.required, Validators.min(0)]],
-            minutosFraccionCarro: [sede.minutosFraccionCarro ?? 0, [Validators.required, Validators.min(0)]],
-            valorFraccionMoto: [sede.valorFraccionMoto ?? 0, [Validators.required, Validators.min(0)]],
-            minutosFraccionMoto: [sede.minutosFraccionMoto ?? 0, [Validators.required, Validators.min(0)]]
+            capacidad: [sede.capacidad, [Validators.required, Validators.min(1)]]
           })
         );
       });
@@ -204,15 +189,16 @@ export class CompanyManagementPageComponent {
   addSede(): void {
     this.sedes.push(
       this.fb.nonNullable.group({
-        id: [0],
         nombre: ['', Validators.required],
-        capacidad: [1, [Validators.required, Validators.min(1)]],
-        valorFraccionCarro: [0, [Validators.required, Validators.min(0)]],
-        minutosFraccionCarro: [0, [Validators.required, Validators.min(0)]],
-        valorFraccionMoto: [0, [Validators.required, Validators.min(0)]],
-        minutosFraccionMoto: [0, [Validators.required, Validators.min(0)]]
+        capacidad: [1, [Validators.required, Validators.min(1)]]
       })
     );
+  }
+
+  goToTarifas(companyId?: number): void {
+    void this.router.navigate(['/app/tarifas'], {
+      queryParams: companyId ? { empresaId: companyId } : undefined
+    });
   }
 
   removeSede(index: number): void {
@@ -239,7 +225,7 @@ export class CompanyManagementPageComponent {
       next: () => {
         this.toastService.show({
           title: 'Empresa guardada',
-          description: 'Los datos de la empresa y sus tarifas se actualizaron correctamente.',
+          description: 'Los datos de la empresa se actualizaron correctamente.',
           type: 'success'
         });
         this.closeForm();
