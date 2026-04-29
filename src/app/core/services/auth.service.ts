@@ -44,7 +44,15 @@ export class AuthService {
     const usuarioId = this.toNumberOrNull(body['usuarioId'] ?? body['id']);
     const role = String(body['role'] ?? body['rol'] ?? 'OPERARIO') as Role;
     const username = String(body['username'] ?? body['usuario'] ?? fallbackUsername);
-    const nombre = String(body['nombre'] ?? body['name'] ?? username);
+    const tokenName = this.extractNameFromToken(accessToken);
+    const nombre = String(
+      body['nombre'] ??
+      body['name'] ??
+      body['nombreCompleto'] ??
+      body['fullName'] ??
+      tokenName ??
+      username
+    );
 
     return {
       accessToken,
@@ -64,5 +72,41 @@ export class AuthService {
 
     const parsed = Number(value);
     return Number.isNaN(parsed) ? null : parsed;
+  }
+
+  private extractNameFromToken(token: string): string | null {
+    const payload = this.readTokenPayload(token);
+    if (!payload) {
+      return null;
+    }
+
+    const candidate =
+      payload['nombre'] ??
+      payload['name'] ??
+      payload['given_name'] ??
+      payload['preferred_username'] ??
+      payload['unique_name'];
+
+    if (candidate === null || candidate === undefined || candidate === '') {
+      return null;
+    }
+
+    return String(candidate);
+  }
+
+  private readTokenPayload(token: string): Record<string, unknown> | null {
+    const parts = token.split('.');
+    if (parts.length < 2 || typeof atob !== 'function') {
+      return null;
+    }
+
+    try {
+      const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=');
+      const parsed = JSON.parse(atob(padded)) as Record<string, unknown>;
+      return parsed;
+    } catch {
+      return null;
+    }
   }
 }

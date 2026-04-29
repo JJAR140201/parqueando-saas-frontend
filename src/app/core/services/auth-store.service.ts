@@ -52,7 +52,8 @@ export class AuthStoreService {
 
     const role = (localStorage.getItem(STORAGE_KEYS.role) as Role | null) ?? defaultRole;
     const username = localStorage.getItem(STORAGE_KEYS.username) ?? '';
-    const nombre = localStorage.getItem(STORAGE_KEYS.nombre) ?? username;
+    const storedNombre = localStorage.getItem(STORAGE_KEYS.nombre);
+    const nombre = storedNombre || this.extractNameFromToken(accessToken) || username;
     const empresaIdRaw = localStorage.getItem(STORAGE_KEYS.empresaId);
     const sedeIdRaw = localStorage.getItem(STORAGE_KEYS.sedeId);
     const usuarioIdRaw = localStorage.getItem(STORAGE_KEYS.usuarioId);
@@ -82,5 +83,32 @@ export class AuthStoreService {
 
   private hasStorage(): boolean {
     return typeof localStorage !== 'undefined';
+  }
+
+  private extractNameFromToken(token: string): string | null {
+    const parts = token.split('.');
+    if (parts.length < 2 || typeof atob !== 'function') {
+      return null;
+    }
+
+    try {
+      const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=');
+      const payload = JSON.parse(atob(padded)) as Record<string, unknown>;
+      const candidate =
+        payload['nombre'] ??
+        payload['name'] ??
+        payload['given_name'] ??
+        payload['preferred_username'] ??
+        payload['unique_name'];
+
+      if (candidate === null || candidate === undefined || candidate === '') {
+        return null;
+      }
+
+      return String(candidate);
+    } catch {
+      return null;
+    }
   }
 }
