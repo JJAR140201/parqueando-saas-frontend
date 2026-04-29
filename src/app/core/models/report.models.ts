@@ -1,7 +1,7 @@
 export type ReportStatus = 'ACTIVO' | 'FINALIZADO';
 
 export interface ParkingReportFilters {
-  empresaId: number;
+  empresaId?: number;
   sedeId?: number;
   estado?: ReportStatus;
   desde?: string;

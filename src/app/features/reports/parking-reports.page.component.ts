@@ -27,7 +27,7 @@ import { ParkingReportItem, ReportStatus } from '../../core/models/report.models
         <label class="space-y-1" *ngIf="isSuperAdmin(); else fixedEmpresaBlock">
           <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Empresa</span>
           <select class="input-base" formControlName="empresaId" (change)="onCompanyChange()">
-            <option [ngValue]="0">Selecciona una empresa</option>
+            <option [ngValue]="0">Todas</option>
             <option *ngFor="let company of companies()" [ngValue]="company.id ?? 0">{{ company.nombre }}</option>
           </select>
         </label>
@@ -145,7 +145,7 @@ export class ParkingReportsPageComponent {
   });
 
   readonly form = this.fb.nonNullable.group({
-    empresaId: [this.authStore.empresaId() ?? 0, [Validators.required, Validators.min(1)]],
+    empresaId: [this.authStore.empresaId() ?? 0, this.isSuperAdmin() ? [] : [Validators.required, Validators.min(1)]],
     sedeId: [this.authStore.sedeId() ?? 0],
     estado: [''],
     desde: [''],
@@ -224,7 +224,7 @@ export class ParkingReportsPageComponent {
   }
 
   private formPayload(): {
-    empresaId: number;
+    empresaId?: number;
     sedeId?: number;
     estado?: ReportStatus;
     desde?: string;
@@ -235,7 +235,7 @@ export class ParkingReportsPageComponent {
     const scopedSedeId = this.isSuperAdmin() ? raw.sedeId : (this.authStore.sedeId() ?? 0);
 
     return {
-      empresaId: scopedEmpresaId,
+      empresaId: scopedEmpresaId > 0 ? scopedEmpresaId : undefined,
       sedeId: scopedSedeId > 0 ? scopedSedeId : undefined,
       estado: (raw.estado || undefined) as ReportStatus | undefined,
       desde: raw.desde || undefined,

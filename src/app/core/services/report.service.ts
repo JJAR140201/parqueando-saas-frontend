@@ -29,10 +29,14 @@ export class ReportService {
   }
 
   private buildParams(filters: ParkingReportFilters): HttpParams {
-    let params = new HttpParams().set('empresaId', filters.empresaId);
+    let params = new HttpParams();
+
+    if (filters.empresaId && filters.empresaId > 0) {
+      params = params.set('empresaId', String(filters.empresaId));
+    }
 
     if (filters.sedeId) {
-      params = params.set('sedeId', filters.sedeId);
+      params = params.set('sedeId', String(filters.sedeId));
     }
 
     if (filters.estado) {
