@@ -409,6 +409,8 @@ export class MensualidadesPageComponent {
 
         if (this.isSuperAdmin()) {
           this.openCreate();
+          // SUPER_ADMIN: cargar todas las mensualidades automáticamente
+          this.loadRows();
           return;
         }
 
@@ -435,14 +437,15 @@ export class MensualidadesPageComponent {
               this.filterForm.patchValue({ sedeId });
               this.editForm.patchValue({ sedeId });
             }
+
+            // ADMIN/OPERARIO: cargar mensualidades después de establecer sede
+            this.loadRows();
           },
           error: () => {
             this.sedes.set([]);
             this.editSedes.set([]);
           }
         });
-
-        this.loadRows();
       },
       error: () => {
         this.companies.set([]);
