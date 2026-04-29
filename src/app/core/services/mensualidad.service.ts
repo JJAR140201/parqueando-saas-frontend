@@ -15,10 +15,16 @@ export class MensualidadService {
   }
 
   list(filters: MensualidadFilters): Observable<MensualidadItem[]> {
-    let params = new HttpParams().set('empresaId', filters.empresaId);
+    let params = new HttpParams();
 
-    if (filters.sedeId) {
-      params = params.set('sedeId', filters.sedeId);
+    // Para SUPER_ADMIN: empresaId es opcional. Si no se envía, el backend retorna TODAS las mensualidades.
+    // Para ADMIN/OPERARIO: empresaId siempre viene del contexto de sesión.
+    if (filters.empresaId && filters.empresaId > 0) {
+      params = params.set('empresaId', String(filters.empresaId));
+    }
+
+    if (filters.sedeId && filters.sedeId > 0) {
+      params = params.set('sedeId', String(filters.sedeId));
     }
 
     if (filters.placa) {
@@ -38,18 +44,29 @@ export class MensualidadService {
   }
 
   private normalizeArray(raw: unknown): MensualidadItem[] {
+    console.log('[MensualidadService.list] Raw response:', raw);
+
     if (Array.isArray(raw)) {
+      console.log('[MensualidadService] Response is array, items:', raw.length);
       return raw.map((item) => this.normalizeItem(item));
     }
 
     const record = raw as Record<string, unknown>;
+    
     if (Array.isArray(record['data'])) {
+      console.log('[MensualidadService] Response has .data array, items:', record['data'].length);
       return (record['data'] as unknown[]).map((item) => this.normalizeItem(item));
     }
 
     if (Array.isArray(record['content'])) {
+      console.log('[MensualidadService] Response has .content array, items:', record['content'].length);
       return (record['content'] as unknown[]).map((item) => this.normalizeItem(item));
     }
+
+    // Log available keys for debugging
+    const keys = Object.keys(record);
+    console.warn('[MensualidadService] Unexpected response format. Available keys:', keys);
+    console.warn('[MensualidadService] Full response:', JSON.stringify(record, null, 2));
 
     return [];
   }

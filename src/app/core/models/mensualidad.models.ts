@@ -1,7 +1,7 @@
 import { VehicleType } from './parking.models';
 
 export interface MensualidadFilters {
-  empresaId: number;
+  empresaId?: number;
   sedeId?: number;
   placa?: string;
 }

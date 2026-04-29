@@ -210,7 +210,7 @@ export class MensualidadesPageComponent {
   });
 
   readonly filterForm = this.fb.nonNullable.group({
-    empresaId: [this.authStore.empresaId() ?? 0, [Validators.required, Validators.min(1)]],
+    empresaId: [this.authStore.empresaId() ?? 0, this.isSuperAdmin() ? [] : [Validators.required, Validators.min(1)]],
     sedeId: [this.authStore.sedeId() ?? 0],
     placa: ['']
   });
@@ -236,12 +236,16 @@ export class MensualidadesPageComponent {
       return;
     }
 
+    const payload = this.filterPayload();
+    console.log('[MensualidadesPage] Loading with payload:', payload);
+
     this.loading.set(true);
     this.mensualidadService
-      .list(this.filterPayload())
+      .list(payload)
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
         next: (rows) => {
+          console.log('[MensualidadesPage] Received rows:', rows);
           this.rows.set(rows);
           this.toastService.show({
             title: 'Mensualidades cargadas',
@@ -249,11 +253,12 @@ export class MensualidadesPageComponent {
             type: 'success'
           });
         },
-        error: () => {
+        error: (err) => {
+          console.error('[MensualidadesPage] Error loading rows:', err);
           this.rows.set([]);
           this.toastService.show({
             title: 'No se pudo consultar',
-            description: 'Verifica filtros y disponibilidad del backend.',
+            description: `Error: ${err.message || 'Verifica filtros y disponibilidad del backend.'}`,
             type: 'error'
           });
         }
@@ -450,13 +455,17 @@ export class MensualidadesPageComponent {
     });
   }
 
-  private filterPayload(): { empresaId: number; sedeId?: number; placa?: string } {
+  private filterPayload(): { empresaId?: number; sedeId?: number; placa?: string } {
     const raw = this.filterForm.getRawValue();
     const empresaId = this.isSuperAdmin() ? raw.empresaId : this.currentEmpresaId();
     const sedeId = this.isSuperAdmin() ? raw.sedeId : this.currentSedeId();
 
+    console.log('[MensualidadesPage] filterPayload - raw form:', raw);
+    console.log('[MensualidadesPage] filterPayload - isSuperAdmin:', this.isSuperAdmin());
+    console.log('[MensualidadesPage] filterPayload - empresaId:', empresaId, 'sedeId:', sedeId);
+
     return {
-      empresaId,
+      empresaId: empresaId > 0 ? empresaId : undefined,
       sedeId: sedeId > 0 ? sedeId : undefined,
       placa: raw.placa?.trim() ? raw.placa.trim().toUpperCase() : undefined
     };
