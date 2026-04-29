@@ -89,7 +89,7 @@ export class MainLayoutComponent {
       label: 'Mensualidades',
       route: '/app/mensualidades',
       icon: 'fa-solid fa-calendar-check',
-      roles: ['SUPER_ADMIN', 'ADMIN']
+      roles: ['SUPER_ADMIN', 'ADMIN', 'OPERARIO']
     },
     {
       label: 'Reportes',

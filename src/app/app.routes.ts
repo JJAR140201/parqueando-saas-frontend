@@ -41,7 +41,7 @@ export const routes: Routes = [
 				path: 'mensualidades',
 				component: MensualidadesPageComponent,
 				canActivate: [roleGuard],
-				data: { roles: ['SUPER_ADMIN', 'ADMIN'] }
+				data: { roles: ['SUPER_ADMIN', 'ADMIN', 'OPERARIO'] }
 			},
 			{
 				path: 'reportes',
