@@ -2,6 +2,10 @@ export interface Sede {
   id?: number;
   nombre: string;
   capacidad: number;
+  valorFraccionCarro?: number;
+  minutosFraccionCarro?: number;
+  valorFraccionMoto?: number;
+  minutosFraccionMoto?: number;
 }
 
 export interface Company {

@@ -96,6 +96,25 @@ import { ToastService } from '../../core/services/toast.service';
                     Quitar
                   </button>
                 </div>
+
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  <label class="space-y-1">
+                    <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Tarifa carro</span>
+                    <input class="input-base" type="number" min="0" formControlName="valorFraccionCarro" />
+                  </label>
+                  <label class="space-y-1">
+                    <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Minutos carro</span>
+                    <input class="input-base" type="number" min="0" formControlName="minutosFraccionCarro" />
+                  </label>
+                  <label class="space-y-1">
+                    <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Tarifa moto</span>
+                    <input class="input-base" type="number" min="0" formControlName="valorFraccionMoto" />
+                  </label>
+                  <label class="space-y-1">
+                    <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Minutos moto</span>
+                    <input class="input-base" type="number" min="0" formControlName="minutosFraccionMoto" />
+                  </label>
+                </div>
               </div>
             </div>
 
@@ -167,8 +186,13 @@ export class CompanyManagementPageComponent {
       companySedes.forEach((sede) => {
         this.sedes.push(
           this.fb.nonNullable.group({
+            id: [sede.id ?? 0],
             nombre: [sede.nombre, Validators.required],
-            capacidad: [sede.capacidad, [Validators.required, Validators.min(1)]]
+            capacidad: [sede.capacidad, [Validators.required, Validators.min(1)]],
+            valorFraccionCarro: [sede.valorFraccionCarro ?? 0, [Validators.required, Validators.min(0)]],
+            minutosFraccionCarro: [sede.minutosFraccionCarro ?? 0, [Validators.required, Validators.min(0)]],
+            valorFraccionMoto: [sede.valorFraccionMoto ?? 0, [Validators.required, Validators.min(0)]],
+            minutosFraccionMoto: [sede.minutosFraccionMoto ?? 0, [Validators.required, Validators.min(0)]]
           })
         );
       });
@@ -180,8 +204,13 @@ export class CompanyManagementPageComponent {
   addSede(): void {
     this.sedes.push(
       this.fb.nonNullable.group({
+        id: [0],
         nombre: ['', Validators.required],
-        capacidad: [1, [Validators.required, Validators.min(1)]]
+        capacidad: [1, [Validators.required, Validators.min(1)]],
+        valorFraccionCarro: [0, [Validators.required, Validators.min(0)]],
+        minutosFraccionCarro: [0, [Validators.required, Validators.min(0)]],
+        valorFraccionMoto: [0, [Validators.required, Validators.min(0)]],
+        minutosFraccionMoto: [0, [Validators.required, Validators.min(0)]]
       })
     );
   }
@@ -210,7 +239,7 @@ export class CompanyManagementPageComponent {
       next: () => {
         this.toastService.show({
           title: 'Empresa guardada',
-          description: 'Los datos de la empresa se actualizaron correctamente.',
+          description: 'Los datos de la empresa y sus tarifas se actualizaron correctamente.',
           type: 'success'
         });
         this.closeForm();
