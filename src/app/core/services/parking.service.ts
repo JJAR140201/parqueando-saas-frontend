@@ -42,6 +42,17 @@ export class ParkingService {
     );
   }
 
+  generarTicketPdf(placa: string): Observable<Blob> {
+    const params = new HttpParams().set('placa', placa);
+    return this.http
+      .get(`${this.baseUrl}/salidas/ticket`, { params, responseType: 'blob' })
+      .pipe(
+        catchError(() =>
+          this.http.get(`${this.legacyBaseUrl}/salidas/ticket`, { params, responseType: 'blob' })
+        )
+      );
+  }
+
   private normalizeResumen(raw: unknown): SalidaResumen {
     const r = (raw ?? {}) as Record<string, unknown>;
     return {

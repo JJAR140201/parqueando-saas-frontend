@@ -69,6 +69,9 @@ import { ToastService } from '../../core/services/toast.service';
           <button class="btn-primary mt-4 w-full" type="button" (click)="confirmarSalida()" [disabled]="loadingSalida()">
             Confirmar salida
           </button>
+          <button class="btn-secondary mt-2 w-full" type="button" (click)="descargarTicket()" [disabled]="loadingTicket() || loadingSalida()">
+            {{ loadingTicket() ? 'Generando ticket...' : 'Descargar ticket PDF' }}
+          </button>
         </div>
       </article>
     </section>
@@ -81,6 +84,7 @@ export class OperatorDashboardPageComponent {
 
   readonly loadingEntrada = signal(false);
   readonly loadingSalida = signal(false);
+  readonly loadingTicket = signal(false);
   readonly resumenSalida = signal<SalidaResumen | null>(null);
 
   readonly entradaForm = this.fb.nonNullable.group({
@@ -172,6 +176,35 @@ export class OperatorDashboardPageComponent {
         error: () => {
           this.toastService.show({
             title: 'No se pudo registrar salida',
+            description: 'Intenta nuevamente en unos segundos.',
+            type: 'error'
+          });
+        }
+      });
+  }
+
+  descargarTicket(): void {
+    const resumen = this.resumenSalida();
+    if (!resumen) {
+      return;
+    }
+
+    this.loadingTicket.set(true);
+    this.parkingService
+      .generarTicketPdf(resumen.placa)
+      .pipe(finalize(() => this.loadingTicket.set(false)))
+      .subscribe({
+        next: (blob) => {
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `ticket-${resumen.placa}.pdf`;
+          link.click();
+          window.URL.revokeObjectURL(url);
+        },
+        error: () => {
+          this.toastService.show({
+            title: 'No se pudo generar ticket',
             description: 'Intenta nuevamente en unos segundos.',
             type: 'error'
           });
