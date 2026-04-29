@@ -275,6 +275,8 @@ export class ParkingReportsPageComponent {
         this.companies.set(companies);
 
         if (this.isSuperAdmin()) {
+          // SUPER_ADMIN: cargar todo automáticamente sin requerir filtros.
+          this.loadReport();
           return;
         }
 
@@ -297,6 +299,9 @@ export class ParkingReportsPageComponent {
             if (scopedSedeId) {
               this.form.patchValue({ sedeId: scopedSedeId });
             }
+
+            // ADMIN/OPERARIO: cargar automáticamente con su alcance.
+            this.loadReport();
           },
           error: () => {
             this.sedes.set([]);
@@ -305,6 +310,9 @@ export class ParkingReportsPageComponent {
               description: 'No fue posible obtener las sedes de tu empresa.',
               type: 'error'
             });
+
+            // Si falla sedes, consultar al menos por empresa del usuario.
+            this.loadReport();
           }
         });
       },
