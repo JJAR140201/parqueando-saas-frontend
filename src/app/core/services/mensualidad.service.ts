@@ -96,6 +96,8 @@ export class MensualidadService {
       fechaFin: String(item['fechaFin'] ?? ''),
       empresaId: this.toNumber(item['empresaId']),
       sedeId: this.toNumber(item['sedeId']),
+      empresaNombre: this.toOptionalString(item['empresaNombre'] ?? item['nombreEmpresa'] ?? item['empresa']),
+      sedeNombre: this.toOptionalString(item['sedeNombre'] ?? item['nombreSede'] ?? item['sede']),
       activa: Boolean(item['activa'] ?? true)
     };
   }
@@ -103,5 +105,13 @@ export class MensualidadService {
   private toNumber(value: unknown): number {
     const parsed = Number(value);
     return Number.isNaN(parsed) ? 0 : parsed;
+  }
+
+  private toOptionalString(value: unknown): string | undefined {
+    if (value === null || value === undefined || value === '') {
+      return undefined;
+    }
+
+    return String(value);
   }
 }

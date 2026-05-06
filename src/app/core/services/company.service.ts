@@ -84,6 +84,7 @@ export class CompanyService {
       id: this.toNumber(sede['id'] ?? sede['sedeId']),
       nombre: String(sede['nombre'] ?? sede['nombreSede'] ?? ''),
       capacidad: this.toNumber(sede['capacidad'] ?? sede['capacidadTotal'] ?? sede['capacidadMaxima']),
+      empresaNombre: this.toOptionalString(sede['empresaNombre'] ?? sede['nombreEmpresa'] ?? sede['empresa']),
       valorFraccionCarro: this.toOptionalNumber(sede['valorFraccionCarro']),
       minutosFraccionCarro: this.toOptionalNumber(sede['minutosFraccionCarro']),
       valorFraccionMoto: this.toOptionalNumber(sede['valorFraccionMoto']),
@@ -132,5 +133,13 @@ export class CompanyService {
 
     const parsed = Number(value);
     return Number.isNaN(parsed) ? undefined : parsed;
+  }
+
+  private toOptionalString(value: unknown): string | undefined {
+    if (value === null || value === undefined || value === '') {
+      return undefined;
+    }
+
+    return String(value);
   }
 }

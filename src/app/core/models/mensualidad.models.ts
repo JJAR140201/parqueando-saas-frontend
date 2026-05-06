@@ -26,5 +26,7 @@ export interface MensualidadItem {
   fechaFin: string;
   empresaId: number;
   sedeId: number;
+  empresaNombre?: string;
+  sedeNombre?: string;
   activa: boolean;
 }

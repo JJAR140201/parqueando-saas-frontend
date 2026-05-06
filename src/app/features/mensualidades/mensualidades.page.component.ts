@@ -197,25 +197,35 @@ export class MensualidadesPageComponent {
   readonly companies = signal<Company[]>([]);
   readonly sedes = signal<Sede[]>([]);
   readonly editSedes = signal<Sede[]>([]);
+  readonly scopedCompanyLabel = signal('');
+  readonly scopedSedeLabel = signal('');
   readonly editingId = signal<number | null>(null);
   readonly isSuperAdmin = computed(() => this.authStore.role() === 'SUPER_ADMIN');
 
   readonly scopedCompanyName = computed(() => {
+    if (this.scopedCompanyLabel()) {
+      return this.scopedCompanyLabel();
+    }
+
     const id = this.authStore.empresaId();
     if (!id) {
       return 'Sin empresa anclada';
     }
 
-    return this.companies().find((company) => company.id === id)?.nombre ?? `Empresa #${id}`;
+    return this.companies().find((company) => company.id === id)?.nombre ?? 'Empresa asignada';
   });
 
   readonly scopedSedeName = computed(() => {
+    if (this.scopedSedeLabel()) {
+      return this.scopedSedeLabel();
+    }
+
     const id = this.authStore.sedeId();
     if (!id) {
       return 'Sin sede anclada';
     }
 
-    return this.sedes().find((sede) => sede.id === id)?.nombre ?? `Sede #${id}`;
+    return this.sedes().find((sede) => sede.id === id)?.nombre ?? 'Sede asignada';
   });
 
   readonly filterForm = this.fb.nonNullable.group({
@@ -256,8 +266,8 @@ export class MensualidadesPageComponent {
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
         next: (rows) => {
-          console.log('[MensualidadesPage] Received rows:', rows);
           this.rows.set(rows);
+          this.syncScopedLabels(rows);
           this.toastService.show({
             title: 'Mensualidades cargadas',
             description: `Se encontraron ${rows.length} registros.`,
@@ -422,51 +432,16 @@ export class MensualidadesPageComponent {
   }
 
   private initializeScope(): void {
+    if (!this.isSuperAdmin()) {
+      this.initializeScopedUser();
+      return;
+    }
+
     this.companyService.getAll().subscribe({
       next: (companies) => {
         this.companies.set(companies);
-
-        if (this.isSuperAdmin()) {
-          this.openCreate();
-          // SUPER_ADMIN: cargar todas las mensualidades automáticamente
-          this.loadRows();
-          return;
-        }
-
-        const empresaId = this.currentEmpresaId();
-        if (!empresaId || empresaId <= 0) {
-          this.toastService.show({
-            title: 'Sesion incompleta',
-            description: 'No se encontro empresa anclada para este usuario.',
-            type: 'error'
-          });
-          console.error('[MensualidadesPage] Missing empresaId - authStore:', this.authStore.empresaId(), 'filterForm:', this.filterForm.controls.empresaId.value);
-          return;
-        }
-        console.log('[MensualidadesPage] initializeScope - empresaId:', empresaId);
-
-        this.filterForm.patchValue({ empresaId });
-        this.editForm.patchValue({ empresaId });
-
-        this.companyService.getSedesByCompany(empresaId).subscribe({
-          next: (sedes) => {
-            this.sedes.set(sedes);
-            this.editSedes.set(sedes);
-
-            const sedeId = this.currentSedeId();
-            if (sedeId) {
-              this.filterForm.patchValue({ sedeId });
-              this.editForm.patchValue({ sedeId });
-            }
-
-            // ADMIN/OPERARIO: cargar mensualidades después de establecer sede
-            this.loadRows();
-          },
-          error: () => {
-            this.sedes.set([]);
-            this.editSedes.set([]);
-          }
-        });
+        this.openCreate();
+        this.loadRows();
       },
       error: () => {
         this.companies.set([]);
@@ -477,6 +452,80 @@ export class MensualidadesPageComponent {
         });
       }
     });
+  }
+
+  private initializeScopedUser(): void {
+    const empresaId = this.currentEmpresaId();
+    if (!empresaId || empresaId <= 0) {
+      this.toastService.show({
+        title: 'Sesion incompleta',
+        description: 'No se encontro empresa anclada para este usuario.',
+        type: 'error'
+      });
+      return;
+    }
+
+    this.filterForm.patchValue({ empresaId });
+    this.editForm.patchValue({ empresaId });
+
+    // Intentamos traer nombre real de empresa para ADMIN/OPERARIO sin bloquear la carga
+    this.companyService.getAll().subscribe({
+      next: (companies) => {
+        this.companies.set(companies);
+        const companyName = companies.find((company) => company.id === empresaId)?.nombre;
+        if (companyName) {
+          this.scopedCompanyLabel.set(companyName);
+        }
+      },
+      error: () => {
+        this.companies.set([]);
+      }
+    });
+
+    this.companyService.getSedesByCompany(empresaId).subscribe({
+      next: (sedes) => {
+        this.sedes.set(sedes);
+        this.editSedes.set(sedes);
+
+        const sedeId = this.currentSedeId();
+        if (sedeId) {
+          this.filterForm.patchValue({ sedeId });
+          this.editForm.patchValue({ sedeId });
+        }
+
+        const companyNameFromSede = sedes.find((sede) => Boolean(sede.empresaNombre))?.empresaNombre;
+        if (companyNameFromSede) {
+          this.scopedCompanyLabel.set(companyNameFromSede);
+        }
+
+        const sedeName = sedes.find((sede) => sede.id === this.currentSedeId())?.nombre;
+        if (sedeName) {
+          this.scopedSedeLabel.set(sedeName);
+        }
+
+        this.loadRows();
+      },
+      error: () => {
+        this.sedes.set([]);
+        this.editSedes.set([]);
+        // Cargar de todas formas para que no dependa del filtro manual.
+        this.loadRows();
+      }
+    });
+  }
+
+  private syncScopedLabels(rows: MensualidadItem[]): void {
+    if (this.isSuperAdmin()) {
+      return;
+    }
+
+    const rowWithNames = rows.find((row) => Boolean(row.empresaNombre || row.sedeNombre));
+    if (rowWithNames?.empresaNombre) {
+      this.scopedCompanyLabel.set(rowWithNames.empresaNombre);
+    }
+    if (rowWithNames?.sedeNombre) {
+      this.scopedSedeLabel.set(rowWithNames.sedeNombre);
+    }
   }
 
   private downloadFile(type: 'excel' | 'pdf', fileName: string): void {
