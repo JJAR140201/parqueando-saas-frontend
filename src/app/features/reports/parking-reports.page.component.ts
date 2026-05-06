@@ -125,23 +125,41 @@ export class ParkingReportsPageComponent {
   readonly rows = signal<ParkingReportItem[]>([]);
   readonly companies = signal<Company[]>([]);
   readonly sedes = signal<Sede[]>([]);
+  readonly scopedCompanyLabel = signal('');
+  readonly scopedSedeLabel = signal('');
   readonly statuses: ReportStatus[] = ['ACTIVO', 'FINALIZADO'];
   readonly isSuperAdmin = computed(() => this.authStore.role() === 'SUPER_ADMIN');
   readonly scopedCompanyName = computed(() => {
+    if (this.scopedCompanyLabel()) {
+      return this.scopedCompanyLabel();
+    }
+
+    if (this.authStore.empresaNombre()) {
+      return this.authStore.empresaNombre();
+    }
+
     const id = this.authStore.empresaId();
     if (!id) {
       return 'Sin empresa anclada';
     }
 
-    return this.companies().find((company) => company.id === id)?.nombre ?? `Empresa #${id}`;
+    return this.companies().find((company) => company.id === id)?.nombre ?? 'Empresa asignada';
   });
   readonly scopedSedeName = computed(() => {
+    if (this.scopedSedeLabel()) {
+      return this.scopedSedeLabel();
+    }
+
+    if (this.authStore.sedeNombre()) {
+      return this.authStore.sedeNombre();
+    }
+
     const id = this.authStore.sedeId();
     if (!id) {
       return 'Todas las sedes permitidas';
     }
 
-    return this.sedes().find((sede) => sede.id === id)?.nombre ?? `Sede #${id}`;
+    return this.sedes().find((sede) => sede.id === id)?.nombre ?? 'Sede asignada';
   });
 
   readonly form = this.fb.nonNullable.group({
@@ -170,6 +188,7 @@ export class ParkingReportsPageComponent {
         next: (rows) => {
           const scopedRows = this.applyClientScope(rows);
           this.rows.set(scopedRows);
+          this.syncScopedLabels(scopedRows);
           this.toastService.show({
             title: 'Reporte cargado',
             description: `Se encontraron ${scopedRows.length} registros.`,
@@ -340,6 +359,20 @@ export class ParkingReportsPageComponent {
       const sedeMatch = !scopedSedeId || !row.sedeId || row.sedeId === scopedSedeId;
       return empresaMatch && sedeMatch;
     });
+  }
+
+  private syncScopedLabels(rows: ParkingReportItem[]): void {
+    if (this.isSuperAdmin()) {
+      return;
+    }
+
+    const rowWithNames = rows.find((row) => Boolean(row.nombreEmpresa || row.nombreSede));
+    if (rowWithNames?.nombreEmpresa) {
+      this.scopedCompanyLabel.set(rowWithNames.nombreEmpresa);
+    }
+    if (rowWithNames?.nombreSede) {
+      this.scopedSedeLabel.set(rowWithNames.nombreSede);
+    }
   }
 
   private triggerDownload(blob: Blob, fileName: string): void {

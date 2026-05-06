@@ -39,12 +39,15 @@ export class AuthService {
   private mapSession(response: unknown, fallbackUsername: string): SessionUser {
     const body = response as Record<string, unknown>;
     const accessToken = String(body['accessToken'] ?? body['token'] ?? '');
+    const tokenPayload = this.readTokenPayload(accessToken);
     const empresaId = this.toNumberOrNull(body['empresaId']);
     const sedeId = this.toNumberOrNull(body['sedeId']);
     const usuarioId = this.toNumberOrNull(body['usuarioId'] ?? body['id']);
     const role = String(body['role'] ?? body['rol'] ?? 'OPERARIO') as Role;
     const username = String(body['username'] ?? body['usuario'] ?? fallbackUsername);
-    const tokenName = this.extractNameFromToken(accessToken);
+    const tokenName = this.extractClaim(tokenPayload, ['nombre', 'name', 'given_name', 'preferred_username', 'unique_name']);
+    const empresaNombre = this.extractClaim(tokenPayload, ['empresaNombre', 'nombreEmpresa', 'empresa']);
+    const sedeNombre = this.extractClaim(tokenPayload, ['sedeNombre', 'nombreSede', 'sede']);
     const nombre = String(
       body['nombre'] ??
       body['name'] ??
@@ -53,12 +56,15 @@ export class AuthService {
       tokenName ??
       username
     );
-    console.log('[Auth] Session mapped - nombre:', nombre, 'username:', username, 'role:', role, 'empresaId:', empresaId, 'sedeId:', sedeId);
+    const resolvedEmpresaNombre = this.toStringOrUndefined(body['empresaNombre'] ?? body['nombreEmpresa'] ?? body['empresa']) ?? empresaNombre;
+    const resolvedSedeNombre = this.toStringOrUndefined(body['sedeNombre'] ?? body['nombreSede'] ?? body['sede']) ?? sedeNombre;
 
     return {
       accessToken,
       empresaId,
+      empresaNombre: resolvedEmpresaNombre,
       sedeId,
+      sedeNombre: resolvedSedeNombre,
       usuarioId,
       role,
       username,
@@ -75,24 +81,26 @@ export class AuthService {
     return Number.isNaN(parsed) ? null : parsed;
   }
 
-  private extractNameFromToken(token: string): string | null {
-    const payload = this.readTokenPayload(token);
+  private extractClaim(payload: Record<string, unknown> | null, keys: string[]): string | undefined {
     if (!payload) {
-      return null;
+      return undefined;
     }
 
-    const candidate =
-      payload['nombre'] ??
-      payload['name'] ??
-      payload['given_name'] ??
-      payload['preferred_username'] ??
-      payload['unique_name'];
+    const candidate = keys.map((key) => payload[key]).find((value) => value !== null && value !== undefined && value !== '');
 
     if (candidate === null || candidate === undefined || candidate === '') {
-      return null;
+      return undefined;
     }
 
     return String(candidate);
+  }
+
+  private toStringOrUndefined(value: unknown): string | undefined {
+    if (value === null || value === undefined || value === '') {
+      return undefined;
+    }
+
+    return String(value);
   }
 
   private readTokenPayload(token: string): Record<string, unknown> | null {

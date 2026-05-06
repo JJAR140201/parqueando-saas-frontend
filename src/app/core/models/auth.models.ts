@@ -17,7 +17,9 @@ export interface RegisterRequest {
 export interface SessionUser {
   accessToken: string;
   empresaId: number | null;
+  empresaNombre?: string;
   sedeId: number | null;
+  sedeNombre?: string;
   usuarioId: number | null;
   role: Role;
   username: string;

@@ -207,6 +207,10 @@ export class MensualidadesPageComponent {
       return this.scopedCompanyLabel();
     }
 
+    if (this.authStore.empresaNombre()) {
+      return this.authStore.empresaNombre();
+    }
+
     const id = this.authStore.empresaId();
     if (!id) {
       return 'Sin empresa anclada';
@@ -218,6 +222,10 @@ export class MensualidadesPageComponent {
   readonly scopedSedeName = computed(() => {
     if (this.scopedSedeLabel()) {
       return this.scopedSedeLabel();
+    }
+
+    if (this.authStore.sedeNombre()) {
+      return this.authStore.sedeNombre();
     }
 
     const id = this.authStore.sedeId();

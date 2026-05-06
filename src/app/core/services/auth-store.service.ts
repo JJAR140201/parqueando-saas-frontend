@@ -14,7 +14,9 @@ export class AuthStoreService {
   readonly nombre = computed(() => this.session()?.nombre ?? '');
   readonly displayName = computed(() => this.session()?.nombre || this.session()?.username || '');
   readonly empresaId = computed(() => this.session()?.empresaId ?? null);
+  readonly empresaNombre = computed(() => this.session()?.empresaNombre ?? '');
   readonly sedeId = computed(() => this.session()?.sedeId ?? null);
+  readonly sedeNombre = computed(() => this.session()?.sedeNombre ?? '');
   readonly usuarioId = computed(() => this.session()?.usuarioId ?? null);
   readonly isAuthenticated = computed(() => Boolean(this.session()?.accessToken));
 
@@ -25,7 +27,9 @@ export class AuthStoreService {
     this.safeStorageSet(STORAGE_KEYS.username, session.username);
     this.safeStorageSet(STORAGE_KEYS.nombre, session.nombre);
     this.safeStorageSet(STORAGE_KEYS.empresaId, String(session.empresaId ?? ''));
+    this.safeStorageSet(STORAGE_KEYS.empresaNombre, session.empresaNombre ?? '');
     this.safeStorageSet(STORAGE_KEYS.sedeId, String(session.sedeId ?? ''));
+    this.safeStorageSet(STORAGE_KEYS.sedeNombre, session.sedeNombre ?? '');
     this.safeStorageSet(STORAGE_KEYS.usuarioId, String(session.usuarioId ?? ''));
   }
 
@@ -36,7 +40,9 @@ export class AuthStoreService {
     this.safeStorageRemove(STORAGE_KEYS.username);
     this.safeStorageRemove(STORAGE_KEYS.nombre);
     this.safeStorageRemove(STORAGE_KEYS.empresaId);
+    this.safeStorageRemove(STORAGE_KEYS.empresaNombre);
     this.safeStorageRemove(STORAGE_KEYS.sedeId);
+    this.safeStorageRemove(STORAGE_KEYS.sedeNombre);
     this.safeStorageRemove(STORAGE_KEYS.usuarioId);
   }
 
@@ -55,7 +61,9 @@ export class AuthStoreService {
     const storedNombre = localStorage.getItem(STORAGE_KEYS.nombre);
     const nombre = storedNombre || this.extractNameFromToken(accessToken) || username;
     const empresaIdRaw = localStorage.getItem(STORAGE_KEYS.empresaId);
+    const empresaNombreRaw = localStorage.getItem(STORAGE_KEYS.empresaNombre);
     const sedeIdRaw = localStorage.getItem(STORAGE_KEYS.sedeId);
+    const sedeNombreRaw = localStorage.getItem(STORAGE_KEYS.sedeNombre);
     const usuarioIdRaw = localStorage.getItem(STORAGE_KEYS.usuarioId);
 
     return {
@@ -64,7 +72,9 @@ export class AuthStoreService {
       username,
       nombre,
       empresaId: empresaIdRaw ? Number(empresaIdRaw) : null,
+      empresaNombre: empresaNombreRaw || this.extractClaimFromToken(accessToken, ['empresaNombre', 'nombreEmpresa', 'empresa']) || undefined,
       sedeId: sedeIdRaw ? Number(sedeIdRaw) : null,
+      sedeNombre: sedeNombreRaw || this.extractClaimFromToken(accessToken, ['sedeNombre', 'nombreSede', 'sede']) || undefined,
       usuarioId: usuarioIdRaw ? Number(usuarioIdRaw) : null
     };
   }
@@ -86,29 +96,28 @@ export class AuthStoreService {
   }
 
   private extractNameFromToken(token: string): string | null {
+    return this.extractClaimFromToken(token, ['nombre', 'name', 'given_name', 'preferred_username', 'unique_name']) ?? null;
+  }
+
+  private extractClaimFromToken(token: string, keys: string[]): string | undefined {
     const parts = token.split('.');
     if (parts.length < 2 || typeof atob !== 'function') {
-      return null;
+      return undefined;
     }
 
     try {
       const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
       const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=');
       const payload = JSON.parse(atob(padded)) as Record<string, unknown>;
-      const candidate =
-        payload['nombre'] ??
-        payload['name'] ??
-        payload['given_name'] ??
-        payload['preferred_username'] ??
-        payload['unique_name'];
+      const candidate = keys.map((key) => payload[key]).find((value) => value !== null && value !== undefined && value !== '');
 
       if (candidate === null || candidate === undefined || candidate === '') {
-        return null;
+        return undefined;
       }
 
       return String(candidate);
     } catch {
-      return null;
+      return undefined;
     }
   }
 }
