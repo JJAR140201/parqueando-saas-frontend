@@ -175,7 +175,7 @@ export class ParkingReportsPageComponent {
   }
 
   loadReport(): void {
-    if (this.form.invalid) {
+    if (this.isSuperAdmin() && this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
@@ -289,51 +289,15 @@ export class ParkingReportsPageComponent {
   }
 
   private initializeScope(): void {
+    if (!this.isSuperAdmin()) {
+      this.initializeScopedUser();
+      return;
+    }
+
     this.companyService.getAll().subscribe({
       next: (companies) => {
         this.companies.set(companies);
-
-        if (this.isSuperAdmin()) {
-          // SUPER_ADMIN: cargar todo automáticamente sin requerir filtros.
-          this.loadReport();
-          return;
-        }
-
-        const empresaId = this.authStore.empresaId() ?? 0;
-        this.form.patchValue({ empresaId });
-
-        if (!empresaId) {
-          this.toastService.show({
-            title: 'Sesion incompleta',
-            description: 'No se encontro empresa anclada para este usuario.',
-            type: 'error'
-          });
-          return;
-        }
-
-        this.companyService.getSedesByCompany(empresaId).subscribe({
-          next: (sedes) => {
-            this.sedes.set(sedes);
-            const scopedSedeId = this.authStore.sedeId();
-            if (scopedSedeId) {
-              this.form.patchValue({ sedeId: scopedSedeId });
-            }
-
-            // ADMIN/OPERARIO: cargar automáticamente con su alcance.
-            this.loadReport();
-          },
-          error: () => {
-            this.sedes.set([]);
-            this.toastService.show({
-              title: 'No se pudo cargar el alcance',
-              description: 'No fue posible obtener las sedes de tu empresa.',
-              type: 'error'
-            });
-
-            // Si falla sedes, consultar al menos por empresa del usuario.
-            this.loadReport();
-          }
-        });
+        this.loadReport();
       },
       error: () => {
         this.companies.set([]);
@@ -342,6 +306,52 @@ export class ParkingReportsPageComponent {
           description: 'Verifica conexion con el backend.',
           type: 'error'
         });
+      }
+    });
+  }
+
+  private initializeScopedUser(): void {
+    const empresaId = this.authStore.empresaId() ?? 0;
+    const sedeId = this.authStore.sedeId() ?? 0;
+
+    if (!empresaId) {
+      this.toastService.show({
+        title: 'Sesion incompleta',
+        description: 'No se encontro empresa anclada para este usuario.',
+        type: 'error'
+      });
+      return;
+    }
+
+    this.form.patchValue({ empresaId, sedeId });
+
+    if (this.authStore.empresaNombre()) {
+      this.scopedCompanyLabel.set(this.authStore.empresaNombre());
+    }
+
+    if (this.authStore.sedeNombre()) {
+      this.scopedSedeLabel.set(this.authStore.sedeNombre());
+    }
+
+    this.companyService.getSedesByCompany(empresaId).subscribe({
+      next: (sedes) => {
+        this.sedes.set(sedes);
+
+        const sedeName = sedes.find((sede) => sede.id === sedeId)?.nombre;
+        if (sedeName) {
+          this.scopedSedeLabel.set(sedeName);
+        }
+
+        const companyNameFromSede = sedes.find((sede) => Boolean(sede.empresaNombre))?.empresaNombre;
+        if (companyNameFromSede) {
+          this.scopedCompanyLabel.set(companyNameFromSede);
+        }
+
+        this.loadReport();
+      },
+      error: () => {
+        this.sedes.set([]);
+        this.loadReport();
       }
     });
   }
