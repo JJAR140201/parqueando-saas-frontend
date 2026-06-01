@@ -80,7 +80,7 @@ import { ToastService } from '../../core/services/toast.service';
                 Enviar SMS de salida
               </button>
 
-              <div class="space-y-3" *ngIf="smsInputVisible()">
+              <div class="space-y-3" *ngIf="smsInputVisible()" [formGroup]="smsForm">
                 <label class="space-y-1">
                   <span class="text-sm font-medium text-slate-700">Número de teléfono</span>
                   <div class="flex items-center gap-2">
@@ -88,7 +88,7 @@ import { ToastService } from '../../core/services/toast.service';
                     <input class="input-base flex-1" formControlName="numeroTelefono" placeholder="3001234567" inputmode="numeric" />
                   </div>
                 </label>
-                <button class="btn-primary w-full" type="button" (click)="enviarSms()" [disabled]="loadingSalida()">
+                <button class="btn-primary w-full" type="button" (click)="enviarSms()" [disabled]="smsForm.invalid || loadingSalida()">
                   Enviar SMS
                 </button>
               </div>
@@ -117,8 +117,11 @@ export class OperatorDashboardPageComponent {
   });
 
   readonly salidaForm = this.fb.nonNullable.group({
-    placa: ['', Validators.required],
-    numeroTelefono: ['']
+    placa: ['', Validators.required]
+  });
+
+  readonly smsForm = this.fb.nonNullable.group({
+    numeroTelefono: ['', [Validators.required, Validators.pattern(/^\d{10}$/)]]
   });
 
   registrarEntrada(): void {
@@ -216,7 +219,7 @@ export class OperatorDashboardPageComponent {
       return;
     }
 
-    const numeroTelefono = this.salidaForm.controls.numeroTelefono.value?.trim();
+    const numeroTelefono = this.smsForm.controls.numeroTelefono.value?.trim();
     if (!numeroTelefono) {
       this.toastService.show({
         title: 'Número de teléfono requerido',
@@ -227,7 +230,7 @@ export class OperatorDashboardPageComponent {
     }
 
     const numeroTelefonoSoloDigitos = numeroTelefono.replace(/\D/g, '');
-    if (numeroTelefonoSoloDigitos.length < 10) {
+    if (numeroTelefonoSoloDigitos.length !== 10) {
       this.toastService.show({
         title: 'Número inválido',
         description: 'Ingresa un número válido de 10 dígitos después del prefijo +57.',
@@ -244,7 +247,7 @@ export class OperatorDashboardPageComponent {
           description: 'El mensaje de salida se envió correctamente.',
           type: 'success'
         });
-        this.salidaForm.controls.numeroTelefono.reset('');
+        this.smsForm.reset({ numeroTelefono: '' });
       },
       error: () => {
         this.toastService.show({
