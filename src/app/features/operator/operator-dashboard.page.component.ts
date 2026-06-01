@@ -69,9 +69,29 @@ import { ToastService } from '../../core/services/toast.service';
           <button class="btn-primary mt-4 w-full" type="button" (click)="confirmarSalida()" [disabled]="loadingSalida()">
             Confirmar salida
           </button>
-          <button class="btn-secondary mt-2 w-full" type="button" (click)="descargarTicket()" [disabled]="loadingTicket() || loadingSalida()">
-            {{ loadingTicket() ? 'Generando ticket...' : 'Descargar ticket PDF' }}
-          </button>
+          <div class="space-y-3">
+            <label class="flex items-center gap-2 text-sm font-medium text-slate-700">
+              <input type="checkbox" class="checkbox" formControlName="imprimirTicket" />
+              Imprimir ticket al confirmar
+            </label>
+
+            <label class="flex items-center gap-2 text-sm font-medium text-slate-700">
+              <input type="checkbox" class="checkbox" formControlName="enviarSms" />
+              Enviar SMS de salida
+            </label>
+
+            <label class="space-y-1" *ngIf="salidaForm.controls.enviarSms.value">
+              <span class="text-sm font-medium text-slate-700">Número de teléfono</span>
+              <input class="input-base" formControlName="numeroTelefono" placeholder="+573001234567" />
+            </label>
+
+            <button class="btn-primary w-full" type="button" (click)="confirmarSalida()" [disabled]="loadingSalida()">
+              {{ loadingSalida() ? 'Confirmando salida...' : 'Confirmar salida' }}
+            </button>
+            <button class="btn-secondary mt-2 w-full" type="button" (click)="descargarTicket()" [disabled]="loadingTicket() || loadingSalida()">
+              {{ loadingTicket() ? 'Generando ticket...' : 'Descargar ticket PDF' }}
+            </button>
+          </div>
         </div>
       </article>
     </section>
@@ -93,7 +113,10 @@ export class OperatorDashboardPageComponent {
   });
 
   readonly salidaForm = this.fb.nonNullable.group({
-    placa: ['', Validators.required]
+    placa: ['', Validators.required],
+    numeroTelefono: [''],
+    enviarSms: [false],
+    imprimirTicket: [false]
   });
 
   registrarEntrada(): void {
@@ -159,6 +182,19 @@ export class OperatorDashboardPageComponent {
       return;
     }
 
+    const enviarSms = this.salidaForm.controls.enviarSms.value;
+    const imprimirTicket = this.salidaForm.controls.imprimirTicket.value;
+    const numeroTelefono = this.salidaForm.controls.numeroTelefono.value?.trim();
+
+    if (enviarSms && !numeroTelefono) {
+      this.toastService.show({
+        title: 'Número de teléfono requerido',
+        description: 'Ingresa un número para enviar el SMS de salida.',
+        type: 'warning'
+      });
+      return;
+    }
+
     this.loadingSalida.set(true);
     this.parkingService
       .registrarSalida({ placa: resumen.placa })
@@ -170,7 +206,51 @@ export class OperatorDashboardPageComponent {
             description: `Vehiculo ${resumen.placa} retirado. Total: $${resumen.totalPagado}`,
             type: 'success'
           });
-          this.salidaForm.reset({ placa: '' });
+
+          if (enviarSms && numeroTelefono) {
+            this.parkingService.enviarReciboPorSms(resumen.placa, numeroTelefono).subscribe({
+              next: () => {
+                this.toastService.show({
+                  title: 'SMS enviado',
+                  description: 'El mensaje de salida se envió correctamente.',
+                  type: 'success'
+                });
+              },
+              error: () => {
+                this.toastService.show({
+                  title: 'No se pudo enviar SMS',
+                  description: 'Verifica el número y vuelve a intentar.',
+                  type: 'error'
+                });
+              }
+            });
+          }
+
+          if (imprimirTicket) {
+            this.loadingTicket.set(true);
+            this.parkingService
+              .generarTicketPdf(resumen.placa)
+              .pipe(finalize(() => this.loadingTicket.set(false)))
+              .subscribe({
+                next: (blob) => {
+                  const url = window.URL.createObjectURL(blob);
+                  const link = document.createElement('a');
+                  link.href = url;
+                  link.download = `ticket-${resumen.placa}.pdf`;
+                  link.click();
+                  window.URL.revokeObjectURL(url);
+                },
+                error: () => {
+                  this.toastService.show({
+                    title: 'No se pudo generar ticket',
+                    description: 'Intenta nuevamente en unos segundos.',
+                    type: 'error'
+                  });
+                }
+              });
+          }
+
+          this.salidaForm.reset({ placa: '', numeroTelefono: '', enviarSms: false, imprimirTicket: false });
           this.resumenSalida.set(null);
         },
         error: () => {

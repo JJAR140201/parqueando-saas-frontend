@@ -53,6 +53,13 @@ export class ParkingService {
       );
   }
 
+  enviarReciboPorSms(placa: string, numeroTelefono: string): Observable<unknown> {
+    return this.http.post(`${this.legacyBaseUrl}/salidas/enviar-sms`, {
+      placa,
+      numeroTelefono
+    });
+  }
+
   private normalizeResumen(raw: unknown): SalidaResumen {
     const r = (raw ?? {}) as Record<string, unknown>;
     return {
