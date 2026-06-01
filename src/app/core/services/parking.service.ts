@@ -54,10 +54,17 @@ export class ParkingService {
   }
 
   enviarReciboPorSms(placa: string, numeroTelefono: string): Observable<unknown> {
-    return this.http.post(`${this.legacyBaseUrl}/salidas/enviar-sms`, {
+    return this.http.post(`${this.baseUrl}/salidas/enviar-sms`, {
       placa,
       numeroTelefono
-    });
+    }).pipe(
+      catchError(() =>
+        this.http.post(`${this.legacyBaseUrl}/salidas/enviar-sms`, {
+          placa,
+          numeroTelefono
+        })
+      )
+    );
   }
 
   private normalizeResumen(raw: unknown): SalidaResumen {
