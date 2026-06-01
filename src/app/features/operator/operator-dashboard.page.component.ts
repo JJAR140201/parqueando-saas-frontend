@@ -67,10 +67,13 @@ import { ToastService } from '../../core/services/toast.service';
           </dl>
 
           <div class="space-y-3 pt-3" *ngIf="!salidaConfirmada()" [formGroup]="smsForm">
-            <p class="text-xs font-medium text-slate-500 uppercase tracking-wide">Enviar comprobante por SMS (opcional)</p>
+            <p class="text-xs font-medium text-slate-500 uppercase tracking-wide">Opciones antes de confirmar</p>
+            <button class="btn-secondary w-full" type="button" (click)="descargarTicket()" [disabled]="loadingTicket()">
+              {{ loadingTicket() ? 'Generando ticket...' : 'Imprimir ticket' }}
+            </button>
             <div class="flex items-center gap-2">
               <span class="inline-flex h-10 items-center rounded-xl border border-slate-300 bg-slate-100 px-3 text-sm text-slate-700">+57</span>
-              <input class="input-base flex-1" formControlName="numeroTelefono" placeholder="3001234567" inputmode="numeric" />
+              <input class="input-base flex-1" formControlName="numeroTelefono" placeholder="3001234567 (SMS opcional)" inputmode="numeric" />
             </div>
           </div>
 
@@ -78,12 +81,6 @@ import { ToastService } from '../../core/services/toast.service';
             <button class="btn-primary w-full" type="button" (click)="confirmarSalida()" [disabled]="loadingSalida() || salidaConfirmada()">
               {{ loadingSalida() ? 'Confirmando salida...' : salidaConfirmada() ? 'Salida confirmada' : 'Confirmar salida' }}
             </button>
-
-            <div *ngIf="salidaConfirmada()" class="space-y-3">
-              <button class="btn-secondary w-full" type="button" (click)="descargarTicket()" [disabled]="loadingTicket()">
-                {{ loadingTicket() ? 'Generando ticket...' : 'Imprimir ticket' }}
-              </button>
-            </div>
           </div>
         </div>
       </article>
