@@ -81,6 +81,9 @@ import { ToastService } from '../../core/services/toast.service';
             <button class="btn-primary w-full" type="button" (click)="confirmarSalida()" [disabled]="loadingSalida() || salidaConfirmada()">
               {{ loadingSalida() ? 'Confirmando salida...' : salidaConfirmada() ? 'Salida confirmada' : 'Confirmar salida' }}
             </button>
+            <button *ngIf="salidaConfirmada()" class="btn-secondary w-full" type="button" (click)="nuevaSalida()">
+              Nueva salida
+            </button>
           </div>
         </div>
       </article>
@@ -204,7 +207,6 @@ export class OperatorDashboardPageComponent {
         }
         this.salidaConfirmada.set(true);
         this.smsForm.reset({ numeroTelefono: '' });
-        this.salidaForm.controls.placa.disable();
       },
       error: () => {
         this.toastService.show({
@@ -214,6 +216,14 @@ export class OperatorDashboardPageComponent {
         });
       }
     });
+  }
+
+  nuevaSalida(): void {
+    this.resumenSalida.set(null);
+    this.salidaConfirmada.set(false);
+    this.salidaForm.reset({ placa: '' });
+    this.salidaForm.controls.placa.enable();
+    this.smsForm.reset({ numeroTelefono: '' });
   }
 
   descargarTicket(): void {
