@@ -190,7 +190,7 @@ export class OperatorDashboardPageComponent {
       this.toastService.show({
         title: 'Número de teléfono requerido',
         description: 'Ingresa un número para enviar el SMS de salida.',
-        type: 'warning'
+        type: 'info'
       });
       return;
     }
