@@ -66,31 +66,33 @@ import { ToastService } from '../../core/services/toast.service';
             <dd class="text-right text-base font-bold text-emerald-600">$ {{ resumen.totalPagado | number }}</dd>
           </dl>
 
-          <button class="btn-primary mt-4 w-full" type="button" (click)="confirmarSalida()" [disabled]="loadingSalida()">
-            Confirmar salida
-          </button>
           <div class="space-y-3">
-            <label class="flex items-center gap-2 text-sm font-medium text-slate-700">
-              <input type="checkbox" class="checkbox" formControlName="imprimirTicket" />
-              Imprimir ticket al confirmar
-            </label>
-
-            <label class="flex items-center gap-2 text-sm font-medium text-slate-700">
-              <input type="checkbox" class="checkbox" formControlName="enviarSms" />
-              Enviar SMS de salida
-            </label>
-
-            <label class="space-y-1" *ngIf="salidaForm.controls.enviarSms.value">
-              <span class="text-sm font-medium text-slate-700">Número de teléfono</span>
-              <input class="input-base" formControlName="numeroTelefono" placeholder="+573001234567" />
-            </label>
-
-            <button class="btn-primary w-full" type="button" (click)="confirmarSalida()" [disabled]="loadingSalida()">
-              {{ loadingSalida() ? 'Confirmando salida...' : 'Confirmar salida' }}
+            <button class="btn-primary w-full" type="button" (click)="confirmarSalida()" [disabled]="loadingSalida() || salidaConfirmada()">
+              {{ loadingSalida() ? 'Confirmando salida...' : salidaConfirmada() ? 'Salida confirmada' : 'Confirmar salida' }}
             </button>
-            <button class="btn-secondary mt-2 w-full" type="button" (click)="descargarTicket()" [disabled]="loadingTicket() || loadingSalida()">
-              {{ loadingTicket() ? 'Generando ticket...' : 'Descargar ticket PDF' }}
-            </button>
+
+            <div *ngIf="salidaConfirmada()" class="space-y-3 pt-3">
+              <button class="btn-secondary w-full" type="button" (click)="descargarTicket()" [disabled]="loadingTicket()">
+                {{ loadingTicket() ? 'Generando ticket...' : 'Imprimir ticket' }}
+              </button>
+
+              <button class="btn-primary w-full" type="button" (click)="smsInputVisible.set(true)">
+                Enviar SMS de salida
+              </button>
+
+              <div class="space-y-3" *ngIf="smsInputVisible()">
+                <label class="space-y-1">
+                  <span class="text-sm font-medium text-slate-700">Número de teléfono</span>
+                  <div class="flex items-center gap-2">
+                    <span class="inline-flex h-10 items-center rounded-xl border border-slate-300 bg-slate-100 px-3 text-sm text-slate-700">+57</span>
+                    <input class="input-base flex-1" formControlName="numeroTelefono" placeholder="3001234567" inputmode="numeric" />
+                  </div>
+                </label>
+                <button class="btn-primary w-full" type="button" (click)="enviarSms()" [disabled]="loadingSalida()">
+                  Enviar SMS
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </article>
@@ -106,6 +108,8 @@ export class OperatorDashboardPageComponent {
   readonly loadingSalida = signal(false);
   readonly loadingTicket = signal(false);
   readonly resumenSalida = signal<SalidaResumen | null>(null);
+  readonly salidaConfirmada = signal(false);
+  readonly smsInputVisible = signal(false);
 
   readonly entradaForm = this.fb.nonNullable.group({
     placa: ['', Validators.required],
@@ -114,9 +118,7 @@ export class OperatorDashboardPageComponent {
 
   readonly salidaForm = this.fb.nonNullable.group({
     placa: ['', Validators.required],
-    numeroTelefono: [''],
-    enviarSms: [false],
-    imprimirTicket: [false]
+    numeroTelefono: ['']
   });
 
   registrarEntrada(): void {
@@ -182,19 +184,6 @@ export class OperatorDashboardPageComponent {
       return;
     }
 
-    const enviarSms = this.salidaForm.controls.enviarSms.value;
-    const imprimirTicket = this.salidaForm.controls.imprimirTicket.value;
-    const numeroTelefono = this.salidaForm.controls.numeroTelefono.value?.trim();
-
-    if (enviarSms && !numeroTelefono) {
-      this.toastService.show({
-        title: 'Número de teléfono requerido',
-        description: 'Ingresa un número para enviar el SMS de salida.',
-        type: 'info'
-      });
-      return;
-    }
-
     this.loadingSalida.set(true);
     this.parkingService
       .registrarSalida({ placa: resumen.placa })
@@ -207,51 +196,9 @@ export class OperatorDashboardPageComponent {
             type: 'success'
           });
 
-          if (enviarSms && numeroTelefono) {
-            this.parkingService.enviarReciboPorSms(resumen.placa, numeroTelefono).subscribe({
-              next: () => {
-                this.toastService.show({
-                  title: 'SMS enviado',
-                  description: 'El mensaje de salida se envió correctamente.',
-                  type: 'success'
-                });
-              },
-              error: () => {
-                this.toastService.show({
-                  title: 'No se pudo enviar SMS',
-                  description: 'Verifica el número y vuelve a intentar.',
-                  type: 'error'
-                });
-              }
-            });
-          }
-
-          if (imprimirTicket) {
-            this.loadingTicket.set(true);
-            this.parkingService
-              .generarTicketPdf(resumen.placa)
-              .pipe(finalize(() => this.loadingTicket.set(false)))
-              .subscribe({
-                next: (blob) => {
-                  const url = window.URL.createObjectURL(blob);
-                  const link = document.createElement('a');
-                  link.href = url;
-                  link.download = `ticket-${resumen.placa}.pdf`;
-                  link.click();
-                  window.URL.revokeObjectURL(url);
-                },
-                error: () => {
-                  this.toastService.show({
-                    title: 'No se pudo generar ticket',
-                    description: 'Intenta nuevamente en unos segundos.',
-                    type: 'error'
-                  });
-                }
-              });
-          }
-
-          this.salidaForm.reset({ placa: '', numeroTelefono: '', enviarSms: false, imprimirTicket: false });
-          this.resumenSalida.set(null);
+          this.salidaConfirmada.set(true);
+          this.smsInputVisible.set(false);
+          this.salidaForm.controls.placa.disable();
         },
         error: () => {
           this.toastService.show({
@@ -261,6 +208,52 @@ export class OperatorDashboardPageComponent {
           });
         }
       });
+  }
+
+  enviarSms(): void {
+    const resumen = this.resumenSalida();
+    if (!resumen) {
+      return;
+    }
+
+    const numeroTelefono = this.salidaForm.controls.numeroTelefono.value?.trim();
+    if (!numeroTelefono) {
+      this.toastService.show({
+        title: 'Número de teléfono requerido',
+        description: 'Ingresa el número sin el prefijo +57.',
+        type: 'info'
+      });
+      return;
+    }
+
+    const numeroTelefonoSoloDigitos = numeroTelefono.replace(/\D/g, '');
+    if (numeroTelefonoSoloDigitos.length < 10) {
+      this.toastService.show({
+        title: 'Número inválido',
+        description: 'Ingresa un número válido de 10 dígitos después del prefijo +57.',
+        type: 'info'
+      });
+      return;
+    }
+
+    const numeroTelefonoCompleto = `+57${numeroTelefonoSoloDigitos}`;
+    this.parkingService.enviarReciboPorSms(resumen.placa, numeroTelefonoCompleto).subscribe({
+      next: () => {
+        this.toastService.show({
+          title: 'SMS enviado',
+          description: 'El mensaje de salida se envió correctamente.',
+          type: 'success'
+        });
+        this.salidaForm.controls.numeroTelefono.reset('');
+      },
+      error: () => {
+        this.toastService.show({
+          title: 'No se pudo enviar SMS',
+          description: 'Verifica el número y vuelve a intentar.',
+          type: 'error'
+        });
+      }
+    });
   }
 
   descargarTicket(): void {
