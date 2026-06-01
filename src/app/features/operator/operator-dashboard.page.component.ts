@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { finalize } from 'rxjs';
+import { finalize, switchMap, of } from 'rxjs';
 import { SalidaResumen } from '../../core/models/parking.models';
 import { ParkingService } from '../../core/services/parking.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -66,32 +66,23 @@ import { ToastService } from '../../core/services/toast.service';
             <dd class="text-right text-base font-bold text-emerald-600">$ {{ resumen.totalPagado | number }}</dd>
           </dl>
 
-          <div class="space-y-3">
+          <div class="space-y-3 pt-3" *ngIf="!salidaConfirmada()" [formGroup]="smsForm">
+            <p class="text-xs font-medium text-slate-500 uppercase tracking-wide">Enviar comprobante por SMS (opcional)</p>
+            <div class="flex items-center gap-2">
+              <span class="inline-flex h-10 items-center rounded-xl border border-slate-300 bg-slate-100 px-3 text-sm text-slate-700">+57</span>
+              <input class="input-base flex-1" formControlName="numeroTelefono" placeholder="3001234567" inputmode="numeric" />
+            </div>
+          </div>
+
+          <div class="mt-3 space-y-3">
             <button class="btn-primary w-full" type="button" (click)="confirmarSalida()" [disabled]="loadingSalida() || salidaConfirmada()">
               {{ loadingSalida() ? 'Confirmando salida...' : salidaConfirmada() ? 'Salida confirmada' : 'Confirmar salida' }}
             </button>
 
-            <div *ngIf="salidaConfirmada()" class="space-y-3 pt-3">
+            <div *ngIf="salidaConfirmada()" class="space-y-3">
               <button class="btn-secondary w-full" type="button" (click)="descargarTicket()" [disabled]="loadingTicket()">
                 {{ loadingTicket() ? 'Generando ticket...' : 'Imprimir ticket' }}
               </button>
-
-              <button class="btn-primary w-full" type="button" (click)="smsInputVisible.set(true)">
-                Enviar SMS de salida
-              </button>
-
-              <div class="space-y-3" *ngIf="smsInputVisible()" [formGroup]="smsForm">
-                <label class="space-y-1">
-                  <span class="text-sm font-medium text-slate-700">Número de teléfono</span>
-                  <div class="flex items-center gap-2">
-                    <span class="inline-flex h-10 items-center rounded-xl border border-slate-300 bg-slate-100 px-3 text-sm text-slate-700">+57</span>
-                    <input class="input-base flex-1" formControlName="numeroTelefono" placeholder="3001234567" inputmode="numeric" />
-                  </div>
-                </label>
-                <button class="btn-primary w-full" type="button" (click)="enviarSms()" [disabled]="smsForm.invalid || loadingSalida()">
-                  Enviar SMS
-                </button>
-              </div>
             </div>
           </div>
         </div>
@@ -109,7 +100,6 @@ export class OperatorDashboardPageComponent {
   readonly loadingTicket = signal(false);
   readonly resumenSalida = signal<SalidaResumen | null>(null);
   readonly salidaConfirmada = signal(false);
-  readonly smsInputVisible = signal(false);
 
   readonly entradaForm = this.fb.nonNullable.group({
     placa: ['', Validators.required],
@@ -187,72 +177,42 @@ export class OperatorDashboardPageComponent {
       return;
     }
 
+    const numeroRaw = this.smsForm.controls.numeroTelefono.value?.trim() ?? '';
+    const numeroDigitos = numeroRaw.replace(/\D/g, '');
+    const enviarSms = numeroDigitos.length === 10;
+    const numeroCompleto = `+57${numeroDigitos}`;
+
     this.loadingSalida.set(true);
-    this.parkingService
-      .registrarSalida({ placa: resumen.placa })
-      .pipe(finalize(() => this.loadingSalida.set(false)))
-      .subscribe({
-        next: () => {
-          this.toastService.show({
-            title: 'Salida registrada',
-            description: `Vehiculo ${resumen.placa} retirado. Total: $${resumen.totalPagado}`,
-            type: 'success'
-          });
 
-          this.salidaConfirmada.set(true);
-          this.smsInputVisible.set(false);
-          this.salidaForm.controls.placa.disable();
-        },
-        error: () => {
-          this.toastService.show({
-            title: 'No se pudo registrar salida',
-            description: 'Intenta nuevamente en unos segundos.',
-            type: 'error'
-          });
-        }
-      });
-  }
+    const sms$ = enviarSms
+      ? this.parkingService.enviarReciboPorSms(resumen.placa, numeroCompleto)
+      : of(null);
 
-  enviarSms(): void {
-    const resumen = this.resumenSalida();
-    if (!resumen) {
-      return;
-    }
-
-    const numeroTelefono = this.smsForm.controls.numeroTelefono.value?.trim();
-    if (!numeroTelefono) {
-      this.toastService.show({
-        title: 'Número de teléfono requerido',
-        description: 'Ingresa el número sin el prefijo +57.',
-        type: 'info'
-      });
-      return;
-    }
-
-    const numeroTelefonoSoloDigitos = numeroTelefono.replace(/\D/g, '');
-    if (numeroTelefonoSoloDigitos.length !== 10) {
-      this.toastService.show({
-        title: 'Número inválido',
-        description: 'Ingresa un número válido de 10 dígitos después del prefijo +57.',
-        type: 'info'
-      });
-      return;
-    }
-
-    const numeroTelefonoCompleto = `+57${numeroTelefonoSoloDigitos}`;
-    this.parkingService.enviarReciboPorSms(resumen.placa, numeroTelefonoCompleto).subscribe({
+    sms$.pipe(
+      switchMap(() => this.parkingService.registrarSalida({ placa: resumen.placa })),
+      finalize(() => this.loadingSalida.set(false))
+    ).subscribe({
       next: () => {
         this.toastService.show({
-          title: 'SMS enviado',
-          description: 'El mensaje de salida se envió correctamente.',
+          title: 'Salida registrada',
+          description: `Vehiculo ${resumen.placa} retirado. Total: $${resumen.totalPagado}`,
           type: 'success'
         });
+        if (enviarSms) {
+          this.toastService.show({
+            title: 'SMS enviado',
+            description: 'El comprobante se envió correctamente.',
+            type: 'success'
+          });
+        }
+        this.salidaConfirmada.set(true);
         this.smsForm.reset({ numeroTelefono: '' });
+        this.salidaForm.controls.placa.disable();
       },
       error: () => {
         this.toastService.show({
-          title: 'No se pudo enviar SMS',
-          description: 'Verifica el número y vuelve a intentar.',
+          title: 'No se pudo registrar salida',
+          description: 'Intenta nuevamente en unos segundos.',
           type: 'error'
         });
       }
