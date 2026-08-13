@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { map, Observable, tap } from 'rxjs';
+import { map, Observable, tap, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { LoginRequest, RegisterRequest, Role, SessionUser } from '../models/auth.models';
 import { AuthStoreService } from './auth-store.service';
@@ -21,6 +21,18 @@ export class AuthService {
     );
   }
 
+  refresh(): Observable<SessionUser> {
+    const refreshToken = this.authStore.refreshToken();
+    if (!refreshToken) {
+      return throwError(() => new Error('No hay refresh token disponible'));
+    }
+
+    return this.http.post<unknown>(`${this.baseUrl}/refresh`, { refreshToken }).pipe(
+      map((response) => this.mapSession(response, this.authStore.username())),
+      tap((session) => this.authStore.setSession(session))
+    );
+  }
+
   register(payload: RegisterRequest): Observable<unknown> {
     return this.http.post(`${this.baseUrl}/register`, {
       nombre: payload.nombre,
@@ -33,12 +45,18 @@ export class AuthService {
   }
 
   logout(): void {
+    const refreshToken = this.authStore.refreshToken();
     this.authStore.clearSession();
+
+    if (refreshToken) {
+      this.http.post(`${this.baseUrl}/logout`, { refreshToken }).subscribe({ error: () => undefined });
+    }
   }
 
   private mapSession(response: unknown, fallbackUsername: string): SessionUser {
     const body = response as Record<string, unknown>;
     const accessToken = String(body['accessToken'] ?? body['token'] ?? '');
+    const refreshToken = String(body['refreshToken'] ?? '');
     const tokenPayload = this.readTokenPayload(accessToken);
     const empresaId = this.toNumberOrNull(body['empresaId']);
     const sedeId = this.toNumberOrNull(body['sedeId']);
@@ -61,6 +79,7 @@ export class AuthService {
 
     return {
       accessToken,
+      refreshToken,
       empresaId,
       empresaNombre: resolvedEmpresaNombre,
       sedeId,
