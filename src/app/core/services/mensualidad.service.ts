@@ -94,6 +94,7 @@ export class MensualidadService {
       valorMensual: this.toNumber(item['valorMensual']),
       fechaInicio: String(item['fechaInicio'] ?? ''),
       fechaFin: String(item['fechaFin'] ?? ''),
+      telefono: String(item['telefono'] ?? ''),
       empresaId: this.toNumber(item['empresaId']),
       sedeId: this.toNumber(item['sedeId']),
       empresaNombre: this.toOptionalString(item['empresaNombre'] ?? item['nombreEmpresa'] ?? item['empresa']),
