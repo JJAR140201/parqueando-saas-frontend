@@ -111,6 +111,11 @@ import { ToastService } from '../../core/services/toast.service';
           <input class="input-base" type="date" formControlName="fechaFin" />
         </label>
 
+        <label class="space-y-1">
+          <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Telefono</span>
+          <input class="input-base" formControlName="telefono" placeholder="+573001234567" />
+        </label>
+
         <label class="space-y-1" *ngIf="isSuperAdmin(); else scopedEditEmpresaBlock">
           <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Empresa</span>
           <select class="input-base" formControlName="empresaId" (change)="onEditCompanyChange()">
@@ -157,6 +162,7 @@ import { ToastService } from '../../core/services/toast.service';
               <th class="px-4 py-3 font-semibold">Inicio</th>
               <th class="px-4 py-3 font-semibold">Fin</th>
               <th class="px-4 py-3 font-semibold">Activa</th>
+              <th class="px-4 py-3 font-semibold">Telefono</th>
               <th class="px-4 py-3 text-right font-semibold">Acciones</th>
             </tr>
           </thead>
@@ -168,6 +174,7 @@ import { ToastService } from '../../core/services/toast.service';
               <td class="px-4 py-3 text-slate-700">{{ row.fechaInicio }}</td>
               <td class="px-4 py-3 text-slate-700">{{ row.fechaFin }}</td>
               <td class="px-4 py-3 text-slate-700">{{ row.activa ? 'Si' : 'No' }}</td>
+              <td class="px-4 py-3 text-slate-700">{{ row.telefono }}</td>
               <td class="px-4 py-3 text-right">
                 <button class="btn-secondary mr-2" type="button" (click)="openEdit(row)">Editar</button>
                 <button class="rounded-lg border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-600" type="button" (click)="cancel(row)">
@@ -176,7 +183,7 @@ import { ToastService } from '../../core/services/toast.service';
               </td>
             </tr>
             <tr *ngIf="!rows().length && !loading()">
-              <td class="px-4 py-8 text-center text-slate-500" colspan="7">No hay mensualidades para los filtros seleccionados.</td>
+              <td class="px-4 py-8 text-center text-slate-500" colspan="8">No hay mensualidades para los filtros seleccionados.</td>
             </tr>
           </tbody>
         </table>
@@ -248,6 +255,7 @@ export class MensualidadesPageComponent {
     valorMensual: [250000, [Validators.required, Validators.min(1)]],
     fechaInicio: ['', Validators.required],
     fechaFin: ['', Validators.required],
+    telefono: ['', [Validators.required, Validators.pattern(/^\+[1-9]\d{1,14}$/)]],
     empresaId: [this.authStore.empresaId() ?? 0, [Validators.required, Validators.min(1)]],
     sedeId: [this.authStore.sedeId() ?? 0, [Validators.required, Validators.min(1)]],
     activa: [true]
@@ -310,6 +318,7 @@ export class MensualidadesPageComponent {
       valorMensual: 250000,
       fechaInicio: '',
       fechaFin: '',
+      telefono: '',
       empresaId: this.currentEmpresaId(),
       sedeId: this.currentSedeId(),
       activa: true
@@ -332,6 +341,7 @@ export class MensualidadesPageComponent {
       valorMensual: row.valorMensual,
       fechaInicio: row.fechaInicio,
       fechaFin: row.fechaFin,
+      telefono: row.telefono,
       empresaId: row.empresaId,
       sedeId: row.sedeId,
       activa: row.activa
@@ -599,6 +609,7 @@ export class MensualidadesPageComponent {
       valorMensual: raw.valorMensual,
       fechaInicio: raw.fechaInicio,
       fechaFin: raw.fechaFin,
+      telefono: raw.telefono.trim(),
       empresaId: this.isSuperAdmin() ? raw.empresaId : this.currentEmpresaId(),
       sedeId: this.isSuperAdmin() ? raw.sedeId : this.currentSedeId(),
       activa: raw.activa

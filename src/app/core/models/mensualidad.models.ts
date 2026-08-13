@@ -12,6 +12,7 @@ export interface MensualidadPayload {
   valorMensual: number;
   fechaInicio: string;
   fechaFin: string;
+  telefono: string;
   empresaId: number;
   sedeId: number;
   activa?: boolean;
@@ -24,6 +25,7 @@ export interface MensualidadItem {
   valorMensual: number;
   fechaInicio: string;
   fechaFin: string;
+  telefono: string;
   empresaId: number;
   sedeId: number;
   empresaNombre?: string;
