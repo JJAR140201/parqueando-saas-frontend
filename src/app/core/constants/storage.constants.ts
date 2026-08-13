@@ -1,5 +1,6 @@
 export const STORAGE_KEYS = {
   token: 'parking_access_token',
+  refreshToken: 'parking_refresh_token',
   empresaId: 'parking_empresa_id',
   empresaNombre: 'parking_empresa_nombre',
   sedeId: 'parking_sede_id',

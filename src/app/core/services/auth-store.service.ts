@@ -9,6 +9,7 @@ export class AuthStoreService {
   private readonly session = signal<SessionUser | null>(this.readSession());
 
   readonly token = computed(() => this.session()?.accessToken ?? '');
+  readonly refreshToken = computed(() => this.session()?.refreshToken ?? '');
   readonly role = computed<Role>(() => this.session()?.role ?? defaultRole);
   readonly username = computed(() => this.session()?.username ?? '');
   readonly nombre = computed(() => this.session()?.nombre ?? '');
@@ -23,6 +24,7 @@ export class AuthStoreService {
   setSession(session: SessionUser): void {
     this.session.set(session);
     this.safeStorageSet(STORAGE_KEYS.token, session.accessToken);
+    this.safeStorageSet(STORAGE_KEYS.refreshToken, session.refreshToken);
     this.safeStorageSet(STORAGE_KEYS.role, session.role);
     this.safeStorageSet(STORAGE_KEYS.username, session.username);
     this.safeStorageSet(STORAGE_KEYS.nombre, session.nombre);
@@ -36,6 +38,7 @@ export class AuthStoreService {
   clearSession(): void {
     this.session.set(null);
     this.safeStorageRemove(STORAGE_KEYS.token);
+    this.safeStorageRemove(STORAGE_KEYS.refreshToken);
     this.safeStorageRemove(STORAGE_KEYS.role);
     this.safeStorageRemove(STORAGE_KEYS.username);
     this.safeStorageRemove(STORAGE_KEYS.nombre);
@@ -56,6 +59,7 @@ export class AuthStoreService {
       return null;
     }
 
+    const refreshToken = localStorage.getItem(STORAGE_KEYS.refreshToken) ?? '';
     const role = (localStorage.getItem(STORAGE_KEYS.role) as Role | null) ?? defaultRole;
     const username = localStorage.getItem(STORAGE_KEYS.username) ?? '';
     const storedNombre = localStorage.getItem(STORAGE_KEYS.nombre);
@@ -68,6 +72,7 @@ export class AuthStoreService {
 
     return {
       accessToken,
+      refreshToken,
       role,
       username,
       nombre,
