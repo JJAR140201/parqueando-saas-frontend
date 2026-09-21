@@ -19,6 +19,11 @@ export class MensualidadService {
     return this.http.get<unknown>(this.baseUrl, { params }).pipe(map((rows) => this.normalizeArray(rows)));
   }
 
+  listProximasAVencer(filters: MensualidadFilters): Observable<MensualidadItem[]> {
+    const params = this.buildParams(filters);
+    return this.http.get<unknown>(`${this.baseUrl}/proximas-a-vencer`, { params }).pipe(map((rows) => this.normalizeArray(rows)));
+  }
+
   downloadExcel(filters: MensualidadFilters): Observable<Blob> {
     const params = this.buildParams(filters);
     return this.http.get(`${this.baseUrl}/export/excel`, { params, responseType: 'blob' });

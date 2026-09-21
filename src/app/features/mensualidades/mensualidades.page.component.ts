@@ -23,6 +23,20 @@ import { ToastService } from '../../core/services/toast.service';
         <span class="badge-role">{{ authStore.role() }}</span>
       </header>
 
+      <div class="rounded-xl border border-amber-200 bg-amber-50 p-4" *ngIf="proximasAVencer().length">
+        <p class="text-sm font-semibold text-amber-800">
+          <i class="fa-solid fa-triangle-exclamation mr-2"></i>{{ proximasAVencer().length }} mensualidad(es) por vencer pronto
+        </p>
+        <ul class="mt-2 space-y-1 text-sm text-amber-700">
+          <li *ngFor="let item of proximasAVencer()">
+            {{ item.placa }} — vence el {{ item.fechaFin }} ({{ diasParaVencer(item.fechaFin) }} dia(s))
+          </li>
+        </ul>
+        <p class="mt-2 text-xs text-amber-600">
+          Se cancela automaticamente al vencerse. Si el cliente paga, renueva la mensualidad manualmente (Editar).
+        </p>
+      </div>
+
       <form class="grid grid-cols-1 gap-3 rounded-xl border border-slate-200 p-4 sm:grid-cols-2 lg:grid-cols-4" [formGroup]="filterForm">
         <label class="space-y-1" *ngIf="isSuperAdmin(); else fixedEmpresaBlock">
           <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Empresa</span>
@@ -205,6 +219,7 @@ export class MensualidadesPageComponent {
   readonly loading = signal(false);
   readonly saving = signal(false);
   readonly rows = signal<MensualidadItem[]>([]);
+  readonly proximasAVencer = signal<MensualidadItem[]>([]);
   readonly companies = signal<Company[]>([]);
   readonly sedes = signal<Sede[]>([]);
   readonly editSedes = signal<Sede[]>([]);
@@ -304,6 +319,26 @@ export class MensualidadesPageComponent {
           });
         }
       });
+
+    this.loadProximasAVencer(payload);
+  }
+
+  private loadProximasAVencer(payload: { empresaId?: number; sedeId?: number }): void {
+    this.mensualidadService.listProximasAVencer(payload).subscribe({
+      next: (items) => this.proximasAVencer.set(items),
+      error: () => this.proximasAVencer.set([])
+    });
+  }
+
+  diasParaVencer(fechaFin: string): number {
+    if (!fechaFin) {
+      return 0;
+    }
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const fin = new Date(fechaFin);
+    fin.setHours(0, 0, 0, 0);
+    return Math.round((fin.getTime() - hoy.getTime()) / 86400000);
   }
 
   downloadExcel(): void {
