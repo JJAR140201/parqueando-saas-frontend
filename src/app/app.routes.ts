@@ -7,6 +7,7 @@ import { MainLayoutComponent } from './features/layout/main-layout.component';
 import { MensualidadesPageComponent } from './features/mensualidades/mensualidades.page.component';
 import { OperatorDashboardPageComponent } from './features/operator/operator-dashboard.page.component';
 import { ParkingReportsPageComponent } from './features/reports/parking-reports.page.component';
+import { ResumenDiaPageComponent } from './features/reports/resumen-dia.page.component';
 import { CompanyManagementPageComponent } from './features/super-admin/company-management.page.component';
 import { CompanyTariffsPageComponent } from './features/super-admin/company-tariffs.page.component';
 import { LicenseManagementPageComponent } from './features/super-admin/license-management.page.component';
@@ -53,6 +54,12 @@ export const routes: Routes = [
 			{
 				path: 'operaciones',
 				component: OperatorDashboardPageComponent,
+				canActivate: [roleGuard],
+				data: { roles: ['SUPER_ADMIN', 'ADMIN', 'OPERARIO'] }
+			},
+			{
+				path: 'resumen-dia',
+				component: ResumenDiaPageComponent,
 				canActivate: [roleGuard],
 				data: { roles: ['SUPER_ADMIN', 'ADMIN', 'OPERARIO'] }
 			},

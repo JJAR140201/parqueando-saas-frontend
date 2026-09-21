@@ -98,6 +98,12 @@ export class MainLayoutComponent {
       roles: ['SUPER_ADMIN', 'ADMIN', 'OPERARIO']
     },
     {
+      label: 'Resumen del dia',
+      route: '/app/resumen-dia',
+      icon: 'fa-solid fa-chart-simple',
+      roles: ['SUPER_ADMIN', 'ADMIN', 'OPERARIO']
+    },
+    {
       label: 'Mensualidades',
       route: '/app/mensualidades',
       icon: 'fa-solid fa-calendar-check',

@@ -21,3 +21,16 @@ export interface ParkingReportItem {
   nombreEmpresa?: string;
   nombreSede?: string;
 }
+
+export interface ConteoPorTipo {
+  carros: number;
+  motos: number;
+  total: number;
+}
+
+export interface ResumenDia {
+  fecha: string;
+  dentro: ConteoPorTipo;
+  entradasHoy: ConteoPorTipo;
+  salidasHoy: ConteoPorTipo;
+}

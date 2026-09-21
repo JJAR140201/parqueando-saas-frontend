@@ -2,11 +2,12 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { ParkingReportFilters, ParkingReportItem } from '../models/report.models';
+import { ConteoPorTipo, ParkingReportFilters, ParkingReportItem, ResumenDia } from '../models/report.models';
 
 @Injectable({ providedIn: 'root' })
 export class ReportService {
   private readonly baseUrl = `${environment.apiUrl}/api/v1/reportes/parqueo`;
+  private readonly resumenDiaUrl = `${environment.apiUrl}/api/v1/reportes/resumen-dia`;
 
   constructor(private readonly http: HttpClient) {}
 
@@ -15,6 +16,20 @@ export class ReportService {
 
     return this.http.get<unknown>(this.baseUrl, { params }).pipe(
       map((response) => this.normalizeReportArray(response))
+    );
+  }
+
+  getResumenDia(empresaId?: number, sedeId?: number): Observable<ResumenDia> {
+    let params = new HttpParams();
+    if (empresaId) {
+      params = params.set('empresaId', String(empresaId));
+    }
+    if (sedeId) {
+      params = params.set('sedeId', String(sedeId));
+    }
+
+    return this.http.get<unknown>(this.resumenDiaUrl, { params }).pipe(
+      map((response) => this.normalizeResumenDia(response))
     );
   }
 
@@ -86,6 +101,27 @@ export class ReportService {
       totalCobrado: this.toNumberOrUndefined(item['totalPagado'] ?? item['totalCobrado'] ?? item['valor'] ?? item['total']),
       nombreEmpresa: this.toStringOrUndefined(item['nombreEmpresa'] ?? item['empresaNombre']),
       nombreSede: this.toStringOrUndefined(item['nombreSede'] ?? item['sedeNombre'])
+    };
+  }
+
+  private normalizeResumenDia(raw: unknown): ResumenDia {
+    const response = raw as Record<string, unknown>;
+
+    return {
+      fecha: String(response['fecha'] ?? ''),
+      dentro: this.normalizeConteo(response['dentro']),
+      entradasHoy: this.normalizeConteo(response['entradasHoy']),
+      salidasHoy: this.normalizeConteo(response['salidasHoy'])
+    };
+  }
+
+  private normalizeConteo(raw: unknown): ConteoPorTipo {
+    const conteo = raw as Record<string, unknown> | undefined;
+
+    return {
+      carros: this.toNumberOrUndefined(conteo?.['carros']) ?? 0,
+      motos: this.toNumberOrUndefined(conteo?.['motos']) ?? 0,
+      total: this.toNumberOrUndefined(conteo?.['total']) ?? 0
     };
   }
 
