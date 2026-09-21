@@ -31,4 +31,5 @@ export interface MensualidadItem {
   empresaNombre?: string;
   sedeNombre?: string;
   activa: boolean;
+  vigenteHoy: boolean;
 }

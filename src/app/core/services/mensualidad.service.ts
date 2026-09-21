@@ -99,7 +99,8 @@ export class MensualidadService {
       sedeId: this.toNumber(item['sedeId']),
       empresaNombre: this.toOptionalString(item['empresaNombre'] ?? item['nombreEmpresa'] ?? item['empresa']),
       sedeNombre: this.toOptionalString(item['sedeNombre'] ?? item['nombreSede'] ?? item['sede']),
-      activa: Boolean(item['activa'] ?? true)
+      activa: Boolean(item['activa'] ?? true),
+      vigenteHoy: Boolean(item['vigenteHoy'] ?? item['activa'] ?? true)
     };
   }
 

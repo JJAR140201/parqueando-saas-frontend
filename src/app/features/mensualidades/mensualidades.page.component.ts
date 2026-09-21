@@ -173,7 +173,11 @@ import { ToastService } from '../../core/services/toast.service';
               <td class="px-4 py-3 text-slate-700">$ {{ row.valorMensual | number }}</td>
               <td class="px-4 py-3 text-slate-700">{{ row.fechaInicio }}</td>
               <td class="px-4 py-3 text-slate-700">{{ row.fechaFin }}</td>
-              <td class="px-4 py-3 text-slate-700">{{ row.activa ? 'Si' : 'No' }}</td>
+              <td class="px-4 py-3">
+                <span [class]="row.vigenteHoy ? 'rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700' : 'rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-600'">
+                  {{ row.vigenteHoy ? 'Si' : 'No' }}
+                </span>
+              </td>
               <td class="px-4 py-3 text-slate-700">{{ row.telefono }}</td>
               <td class="px-4 py-3 text-right">
                 <button class="btn-secondary mr-2" type="button" (click)="openEdit(row)">Editar</button>
