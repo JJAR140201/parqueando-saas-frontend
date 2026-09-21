@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { roleGuard } from './core/guards/role.guard';
+import { LicenseActivationPageComponent } from './features/activation/license-activation.page.component';
 import { LoginPageComponent } from './features/auth/login-page.component';
 import { MainLayoutComponent } from './features/layout/main-layout.component';
 import { MensualidadesPageComponent } from './features/mensualidades/mensualidades.page.component';
@@ -8,12 +9,17 @@ import { OperatorDashboardPageComponent } from './features/operator/operator-das
 import { ParkingReportsPageComponent } from './features/reports/parking-reports.page.component';
 import { CompanyManagementPageComponent } from './features/super-admin/company-management.page.component';
 import { CompanyTariffsPageComponent } from './features/super-admin/company-tariffs.page.component';
+import { LicenseManagementPageComponent } from './features/super-admin/license-management.page.component';
 import { UserManagementPageComponent } from './features/users/user-management.page.component';
 
 export const routes: Routes = [
 	{
 		path: 'login',
 		component: LoginPageComponent
+	},
+	{
+		path: 'activar',
+		component: LicenseActivationPageComponent
 	},
 	{
 		path: 'app',
@@ -29,6 +35,12 @@ export const routes: Routes = [
 			{
 				path: 'tarifas',
 				component: CompanyTariffsPageComponent,
+				canActivate: [roleGuard],
+				data: { roles: ['SUPER_ADMIN'] }
+			},
+			{
+				path: 'licencias',
+				component: LicenseManagementPageComponent,
 				canActivate: [roleGuard],
 				data: { roles: ['SUPER_ADMIN'] }
 			},

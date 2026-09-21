@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { map, Observable, tap, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { LoginRequest, RegisterRequest, Role, SessionUser } from '../models/auth.models';
+import { RedeemLicenciaPayload } from '../models/licencia.models';
 import { AuthStoreService } from './auth-store.service';
 
 @Injectable({ providedIn: 'root' })
@@ -29,6 +30,13 @@ export class AuthService {
 
     return this.http.post<unknown>(`${this.baseUrl}/refresh`, { refreshToken }).pipe(
       map((response) => this.mapSession(response, this.authStore.username())),
+      tap((session) => this.authStore.setSession(session))
+    );
+  }
+
+  activateLicencia(payload: RedeemLicenciaPayload): Observable<SessionUser> {
+    return this.http.post<unknown>(`${environment.apiUrl}/api/v1/licencias/redimir`, payload).pipe(
+      map((response) => this.mapSession(response, payload.admin.username)),
       tap((session) => this.authStore.setSession(session))
     );
   }

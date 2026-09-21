@@ -80,6 +80,12 @@ export class MainLayoutComponent {
       roles: ['SUPER_ADMIN']
     },
     {
+      label: 'Licencias',
+      route: '/app/licencias',
+      icon: 'fa-solid fa-key',
+      roles: ['SUPER_ADMIN']
+    },
+    {
       label: 'Usuarios',
       route: '/app/usuarios',
       icon: 'fa-solid fa-users-gear',

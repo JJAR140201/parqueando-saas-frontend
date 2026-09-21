@@ -6,7 +6,13 @@ import { AuthService } from '../services/auth.service';
 import { AuthStoreService } from '../services/auth-store.service';
 
 // Rutas publicas del backend: nunca deben disparar el flujo de refresh.
-const AUTH_FREE_PATHS = ['/api/v1/auth/login', '/api/v1/auth/refresh', '/api/v1/auth/logout'];
+const AUTH_FREE_PATHS = [
+  '/api/v1/auth/login',
+  '/api/v1/auth/refresh',
+  '/api/v1/auth/logout',
+  '/api/v1/licencias/validar',
+  '/api/v1/licencias/redimir'
+];
 
 // Estado compartido entre requests concurrentes para no disparar varios /refresh a la vez.
 let isRefreshing = false;

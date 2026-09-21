@@ -1,22 +1,16 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
-import { Role } from '../../core/models/auth.models';
+import { ROLE_HOME } from '../../core/constants/role-home.constants';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
-
-const roleHome: Record<Role, string> = {
-  SUPER_ADMIN: '/app/empresas',
-  ADMIN: '/app/usuarios',
-  OPERARIO: '/app/operaciones'
-};
 
 @Component({
   selector: 'app-login-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink],
   template: `
     <section class="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
       <div class="mx-auto grid min-h-[88vh] max-w-5xl animate-fade-in-up grid-cols-1 overflow-hidden rounded-3xl bg-white shadow-card lg:grid-cols-[1.2fr_1fr]">
@@ -76,6 +70,11 @@ const roleHome: Record<Role, string> = {
             <button class="btn-primary w-full" type="submit" [disabled]="form.invalid || loading()">
               {{ loading() ? 'Validando...' : 'Entrar' }}
             </button>
+
+            <p class="text-center text-sm text-slate-500">
+              ¿Eres un nuevo cliente?
+              <a routerLink="/activar" class="font-semibold text-cyan-600 hover:underline">Activa tu licencia</a>
+            </p>
           </form>
         </div>
       </div>
@@ -113,7 +112,7 @@ export class LoginPageComponent {
             description: `Bienvenido ${session.nombre || session.username}`,
             type: 'success'
           });
-          void this.router.navigateByUrl(roleHome[session.role]);
+          void this.router.navigateByUrl(ROLE_HOME[session.role]);
         },
         error: () => {
           this.toastService.show({
