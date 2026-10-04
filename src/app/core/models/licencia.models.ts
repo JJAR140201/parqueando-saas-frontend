@@ -11,6 +11,7 @@ export interface LicenciaSummary {
   empresaId: number | null;
   empresaNombre: string | null;
   nota: string | null;
+  prueba: boolean;
 }
 
 export interface LicenciaIssuedResult {
@@ -20,10 +21,12 @@ export interface LicenciaIssuedResult {
   fechaEmision: string;
   fechaExpiracion: string;
   nota: string | null;
+  prueba: boolean;
 }
 
 export interface IssueLicenciaPayload {
   duracionDias?: number;
+  prueba?: boolean;
   nota?: string;
 }
 
@@ -31,6 +34,12 @@ export interface ValidateLicenciaResult {
   valida: boolean;
   mensaje: string;
   fechaExpiracion: string | null;
+}
+
+export interface RenewLicenciaPayload {
+  codigo: string;
+  username: string;
+  password: string;
 }
 
 export interface RedeemLicenciaPayload {

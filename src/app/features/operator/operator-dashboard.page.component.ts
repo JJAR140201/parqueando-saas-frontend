@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { finalize, switchMap, of } from 'rxjs';
+import { finalize } from 'rxjs';
 import { SalidaResumen } from '../../core/models/parking.models';
 import { ParkingService } from '../../core/services/parking.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -66,15 +66,11 @@ import { ToastService } from '../../core/services/toast.service';
             <dd class="text-right text-base font-bold text-emerald-600">$ {{ resumen.totalPagado | number }}</dd>
           </dl>
 
-          <div class="space-y-3 pt-3" *ngIf="!salidaConfirmada()" [formGroup]="smsForm">
+          <div class="space-y-3 pt-3" *ngIf="!salidaConfirmada()">
             <p class="text-xs font-medium text-slate-500 uppercase tracking-wide">Opciones antes de confirmar</p>
             <button class="btn-secondary w-full" type="button" (click)="descargarTicket()" [disabled]="loadingTicket()">
               {{ loadingTicket() ? 'Generando ticket...' : 'Imprimir ticket' }}
             </button>
-            <div class="flex items-center gap-2">
-              <span class="inline-flex h-10 items-center rounded-xl border border-slate-300 bg-slate-100 px-3 text-sm text-slate-700">+57</span>
-              <input class="input-base flex-1" formControlName="numeroTelefono" placeholder="3001234567 (SMS opcional)" inputmode="numeric" />
-            </div>
           </div>
 
           <div class="mt-3 space-y-3">
@@ -108,10 +104,6 @@ export class OperatorDashboardPageComponent {
 
   readonly salidaForm = this.fb.nonNullable.group({
     placa: ['', Validators.required]
-  });
-
-  readonly smsForm = this.fb.nonNullable.group({
-    numeroTelefono: ['', [Validators.required, Validators.pattern(/^\d{10}$/)]]
   });
 
   registrarEntrada(): void {
@@ -177,19 +169,9 @@ export class OperatorDashboardPageComponent {
       return;
     }
 
-    const numeroRaw = this.smsForm.controls.numeroTelefono.value?.trim() ?? '';
-    const numeroDigitos = numeroRaw.replace(/\D/g, '');
-    const enviarSms = numeroDigitos.length === 10;
-    const numeroCompleto = `+57${numeroDigitos}`;
-
     this.loadingSalida.set(true);
 
-    const sms$ = enviarSms
-      ? this.parkingService.enviarReciboPorSms(resumen.placa, numeroCompleto)
-      : of(null);
-
-    sms$.pipe(
-      switchMap(() => this.parkingService.registrarSalida({ placa: resumen.placa })),
+    this.parkingService.registrarSalida({ placa: resumen.placa }).pipe(
       finalize(() => this.loadingSalida.set(false))
     ).subscribe({
       next: () => {
@@ -198,15 +180,7 @@ export class OperatorDashboardPageComponent {
           description: `Vehiculo ${resumen.placa} retirado. Total: $${resumen.totalPagado}`,
           type: 'success'
         });
-        if (enviarSms) {
-          this.toastService.show({
-            title: 'SMS enviado',
-            description: 'El comprobante se envió correctamente.',
-            type: 'success'
-          });
-        }
         this.salidaConfirmada.set(true);
-        this.smsForm.reset({ numeroTelefono: '' });
       },
       error: () => {
         this.toastService.show({
@@ -223,7 +197,6 @@ export class OperatorDashboardPageComponent {
     this.salidaConfirmada.set(false);
     this.salidaForm.reset({ placa: '' });
     this.salidaForm.controls.placa.enable();
-    this.smsForm.reset({ numeroTelefono: '' });
   }
 
   descargarTicket(): void {

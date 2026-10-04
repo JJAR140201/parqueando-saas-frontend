@@ -6,6 +6,9 @@ import { LicenciaIssuedResult, LicenciaSummary } from '../../core/models/licenci
 import { LicenciaService } from '../../core/services/licencia.service';
 import { ToastService } from '../../core/services/toast.service';
 
+/** Valor del selector de duracion que representa la licencia de prueba. */
+const PRUEBA_DIAS = 2;
+
 @Component({
   selector: 'app-license-management-page',
   standalone: true,
@@ -15,7 +18,7 @@ import { ToastService } from '../../core/services/toast.service';
       <header class="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h3 class="text-xl font-semibold text-slate-900">Licencias</h3>
-          <p class="text-sm text-slate-500">Emision y control de licencias anuales para nuevos clientes.</p>
+          <p class="text-sm text-slate-500">Emision y control de licencias (anuales y de prueba) para nuevos clientes.</p>
         </div>
         <button class="btn-primary" type="button" (click)="openIssueForm()">
           <i class="fa-solid fa-plus mr-2"></i>Generar licencia
@@ -40,6 +43,7 @@ import { ToastService } from '../../core/services/toast.service';
               <td class="px-4 py-3 font-mono text-slate-800">{{ licencia.codigoEnmascarado }}</td>
               <td class="px-4 py-3">
                 <span [class]="badgeClass(licencia)">{{ estadoLabel(licencia) }}</span>
+                <span *ngIf="licencia.prueba" class="ml-1 rounded-full bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700">PRUEBA</span>
               </td>
               <td class="px-4 py-3 text-slate-700">{{ licencia.fechaEmision | date: 'short' }}</td>
               <td class="px-4 py-3 text-slate-700">{{ licencia.fechaExpiracion | date: 'shortDate' }}</td>
@@ -76,6 +80,7 @@ import { ToastService } from '../../core/services/toast.service';
             <label class="block space-y-1">
               <span class="text-sm font-medium text-slate-700">Duracion</span>
               <select class="input-base" formControlName="duracionDias">
+                <option [value]="2">Prueba (2 dias desde la activacion)</option>
                 <option [value]="365">1 ano</option>
                 <option [value]="180">6 meses</option>
                 <option [value]="90">3 meses</option>
@@ -112,7 +117,10 @@ import { ToastService } from '../../core/services/toast.service';
           </div>
 
           <p class="mt-3 text-xs text-slate-500">
-            Expira: {{ issuedLicense()?.fechaExpiracion | date: 'longDate' }}
+            <ng-container *ngIf="issuedLicense()?.prueba; else expiraFija">
+              Licencia de prueba: dura 2 dias desde que el cliente la active. Debe activarse antes del {{ issuedLicense()?.fechaExpiracion | date: 'longDate' }}.
+            </ng-container>
+            <ng-template #expiraFija>Expira: {{ issuedLicense()?.fechaExpiracion | date: 'longDate' }}</ng-template>
           </p>
 
           <div class="mt-5 flex justify-end">
@@ -171,7 +179,11 @@ export class LicenseManagementPageComponent {
     const value = this.issueForm.getRawValue();
     this.loading.set(true);
     this.licenciaService
-      .issue({ duracionDias: Number(value.duracionDias), nota: value.nota || undefined })
+      .issue({
+        duracionDias: Number(value.duracionDias),
+        prueba: Number(value.duracionDias) === PRUEBA_DIAS,
+        nota: value.nota || undefined
+      })
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
         next: (result) => {

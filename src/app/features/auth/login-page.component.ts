@@ -75,6 +75,10 @@ import { ToastService } from '../../core/services/toast.service';
               ¿Eres un nuevo cliente?
               <a routerLink="/activar" class="font-semibold text-cyan-600 hover:underline">Activa tu licencia</a>
             </p>
+            <p class="text-center text-sm text-slate-500">
+              ¿Tu licencia venció?
+              <a routerLink="/renovar" class="font-semibold text-cyan-600 hover:underline">Renuévala</a>
+            </p>
           </form>
         </div>
       </div>

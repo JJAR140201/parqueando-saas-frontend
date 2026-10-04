@@ -11,7 +11,8 @@ const AUTH_FREE_PATHS = [
   '/api/v1/auth/refresh',
   '/api/v1/auth/logout',
   '/api/v1/licencias/validar',
-  '/api/v1/licencias/redimir'
+  '/api/v1/licencias/redimir',
+  '/api/v1/licencias/renovar'
 ];
 
 // Estado compartido entre requests concurrentes para no disparar varios /refresh a la vez.

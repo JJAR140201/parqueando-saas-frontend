@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { roleGuard } from './core/guards/role.guard';
+import { LicenseRenewalPageComponent } from './features/activation/license-renewal.page.component';
 import { LicenseActivationPageComponent } from './features/activation/license-activation.page.component';
 import { LoginPageComponent } from './features/auth/login-page.component';
 import { MainLayoutComponent } from './features/layout/main-layout.component';
@@ -21,6 +22,10 @@ export const routes: Routes = [
 	{
 		path: 'activar',
 		component: LicenseActivationPageComponent
+	},
+	{
+		path: 'renovar',
+		component: LicenseRenewalPageComponent
 	},
 	{
 		path: 'app',
