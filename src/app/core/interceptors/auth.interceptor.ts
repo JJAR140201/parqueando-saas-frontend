@@ -33,8 +33,9 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
 
   return next(authRequest).pipe(
     catchError((error: unknown) => {
-      // El backend responde 403 (no 401) cuando el access token falta, es invalido o expiro.
-      if (isAuthFreeRequest || !(error instanceof HttpErrorResponse) || error.status !== 403) {
+      // El backend responde 401 cuando el access token falta, es invalido o expiro. Se sigue
+      // aceptando 403 para sesiones frente a versiones anteriores del backend (que usaban 403).
+      if (isAuthFreeRequest || !(error instanceof HttpErrorResponse) || (error.status !== 401 && error.status !== 403)) {
         return throwError(() => error);
       }
 
