@@ -4,11 +4,14 @@ updates:
     directory: /
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
     ignore:
-      # Los saltos de version mayor de Angular se hacen a mano con `ng update`
-      - dependency-name: "@angular/*"
+      # Angular, Tailwind, Jasmine, etc.: los saltos mayores se hacen a mano (ng update)
+      - dependency-name: "*"
         update-types: ["version-update:semver-major"]
+    groups:
+      menores-y-parches:
+        update-types: ["minor", "patch"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
