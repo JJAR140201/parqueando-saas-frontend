@@ -8,10 +8,9 @@ import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
 
 @Component({
-  selector: 'app-login-page',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
-  template: `
+    selector: 'app-login-page',
+    imports: [CommonModule, ReactiveFormsModule, RouterLink],
+    template: `
     <section class="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
       <div class="mx-auto grid min-h-[88vh] max-w-5xl animate-fade-in-up grid-cols-1 overflow-hidden rounded-3xl bg-white shadow-card lg:grid-cols-[1.2fr_1fr]">
         <div class="hidden bg-slate-900 p-10 text-white lg:block">

@@ -11,10 +11,9 @@ import { ToastService } from '../../core/services/toast.service';
 import { UserService } from '../../core/services/user.service';
 
 @Component({
-  selector: 'app-user-management-page',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
-  template: `
+    selector: 'app-user-management-page',
+    imports: [CommonModule, ReactiveFormsModule],
+    template: `
     <section class="space-y-5">
       <header>
         <h3 class="text-xl font-semibold text-slate-900">Gestion de Usuarios</h3>

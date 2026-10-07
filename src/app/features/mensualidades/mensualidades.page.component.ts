@@ -10,10 +10,9 @@ import { MensualidadService } from '../../core/services/mensualidad.service';
 import { ToastService } from '../../core/services/toast.service';
 
 @Component({
-  selector: 'app-mensualidades-page',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
-  template: `
+    selector: 'app-mensualidades-page',
+    imports: [CommonModule, ReactiveFormsModule],
+    template: `
     <section class="space-y-5">
       <header class="flex flex-wrap items-center justify-between gap-3">
         <div>

@@ -6,10 +6,9 @@ import { ReportService } from '../../core/services/report.service';
 import { ToastService } from '../../core/services/toast.service';
 
 @Component({
-  selector: 'app-resumen-dia-page',
-  standalone: true,
-  imports: [CommonModule],
-  template: `
+    selector: 'app-resumen-dia-page',
+    imports: [CommonModule],
+    template: `
     <section class="space-y-5">
       <header class="flex flex-wrap items-center justify-between gap-3">
         <div>

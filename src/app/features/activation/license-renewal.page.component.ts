@@ -8,10 +8,9 @@ import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
 
 @Component({
-  selector: 'app-license-renewal-page',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
-  template: `
+    selector: 'app-license-renewal-page',
+    imports: [CommonModule, ReactiveFormsModule, RouterLink],
+    template: `
     <section class="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
       <div class="mx-auto max-w-lg animate-fade-in-up rounded-3xl bg-white p-6 shadow-card sm:p-10">
         <div class="mb-6">

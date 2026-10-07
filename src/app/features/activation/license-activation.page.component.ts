@@ -15,10 +15,9 @@ function passwordsMatchValidator(control: AbstractControl): ValidationErrors | n
 }
 
 @Component({
-  selector: 'app-license-activation-page',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
-  template: `
+    selector: 'app-license-activation-page',
+    imports: [CommonModule, ReactiveFormsModule, RouterLink],
+    template: `
     <section class="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
       <div class="mx-auto max-w-2xl animate-fade-in-up rounded-3xl bg-white p-6 shadow-card sm:p-10">
         <div class="mb-6">

@@ -10,10 +10,9 @@ import { ToastService } from '../../core/services/toast.service';
 const PRUEBA_DIAS = 2;
 
 @Component({
-  selector: 'app-license-management-page',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
-  template: `
+    selector: 'app-license-management-page',
+    imports: [CommonModule, ReactiveFormsModule],
+    template: `
     <section class="space-y-5">
       <header class="flex flex-wrap items-center justify-between gap-3">
         <div>

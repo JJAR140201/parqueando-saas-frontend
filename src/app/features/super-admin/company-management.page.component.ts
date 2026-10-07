@@ -8,10 +8,9 @@ import { CompanyService } from '../../core/services/company.service';
 import { ToastService } from '../../core/services/toast.service';
 
 @Component({
-  selector: 'app-company-management-page',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
-  template: `
+    selector: 'app-company-management-page',
+    imports: [CommonModule, ReactiveFormsModule],
+    template: `
     <section class="space-y-5">
       <header class="flex flex-wrap items-center justify-between gap-3">
         <div>

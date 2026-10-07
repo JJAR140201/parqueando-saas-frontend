@@ -3,10 +3,9 @@ import { Component, inject } from '@angular/core';
 import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
-  selector: 'app-toast',
-  standalone: true,
-  imports: [CommonModule],
-  template: `
+    selector: 'app-toast',
+    imports: [CommonModule],
+    template: `
     <div class="pointer-events-none fixed right-4 top-4 z-50 flex w-[92vw] max-w-sm flex-col gap-3">
       <article
         *ngFor="let toast of toastService.toasts()"

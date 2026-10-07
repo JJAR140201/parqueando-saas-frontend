@@ -13,10 +13,9 @@ interface NavItem {
 }
 
 @Component({
-  selector: 'app-main-layout',
-  standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
-  template: `
+    selector: 'app-main-layout',
+    imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
+    template: `
     <div class="min-h-screen p-3 sm:p-4 lg:p-6">
       <div class="mx-auto grid min-h-[calc(100vh-1.5rem)] max-w-7xl grid-cols-1 gap-4 lg:grid-cols-[260px_1fr]">
         <aside class="app-surface p-4 lg:p-5">

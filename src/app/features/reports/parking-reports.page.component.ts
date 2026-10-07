@@ -10,10 +10,9 @@ import { ToastService } from '../../core/services/toast.service';
 import { ParkingReportItem, ReportStatus } from '../../core/models/report.models';
 
 @Component({
-  selector: 'app-parking-reports-page',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
-  template: `
+    selector: 'app-parking-reports-page',
+    imports: [CommonModule, ReactiveFormsModule],
+    template: `
     <section class="space-y-5">
       <header class="flex flex-wrap items-center justify-between gap-3">
         <div>
