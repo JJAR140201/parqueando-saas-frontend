@@ -131,7 +131,7 @@ export class UserManagementPageComponent {
   readonly form = this.fb.nonNullable.group({
     nombre: ['', Validators.required],
     username: ['', Validators.required],
-    password: ['', [Validators.required, Validators.minLength(6)]],
+    password: ['', [Validators.required, Validators.minLength(8)]],
     role: ['OPERARIO' as Role, Validators.required],
     empresaId: [0, [Validators.required, Validators.min(1)]],
     sedeId: [0, [Validators.required, Validators.min(1)]]
