@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, computed, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { Role } from '../../core/models/auth.models';
@@ -14,7 +14,7 @@ interface NavItem {
 
 @Component({
     selector: 'app-main-layout',
-    imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
+    imports: [RouterOutlet, RouterLink, RouterLinkActive],
     template: `
     <div class="min-h-screen p-3 sm:p-4 lg:p-6">
       <div class="mx-auto grid min-h-[calc(100vh-1.5rem)] max-w-7xl grid-cols-1 gap-4 lg:grid-cols-[260px_1fr]">
@@ -23,27 +23,28 @@ interface NavItem {
             <p class="text-xs uppercase tracking-[0.16em] text-slate-500">Parqueando</p>
             <h1 class="text-lg font-semibold text-slate-900">Operacion</h1>
           </div>
-
+    
           <nav class="space-y-2">
-            <a
-              *ngFor="let item of navItems()"
-              [routerLink]="item.route"
-              routerLinkActive="bg-slate-900 text-white"
-              class="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
-            >
-              <i [class]="item.icon"></i>
-              {{ item.label }}
-            </a>
+            @for (item of navItems(); track item) {
+              <a
+                [routerLink]="item.route"
+                routerLinkActive="bg-slate-900 text-white"
+                class="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+                >
+                <i [class]="item.icon"></i>
+                {{ item.label }}
+              </a>
+            }
           </nav>
         </aside>
-
+    
         <section class="flex min-h-0 flex-col gap-4">
           <header class="app-surface flex flex-wrap items-center justify-between gap-3 px-5 py-4">
             <div>
               <p class="text-xs uppercase tracking-[0.16em] text-slate-500">Usuario actual</p>
               <h2 class="text-lg font-semibold text-slate-900">{{ authStore.displayName() || 'Invitado' }}</h2>
             </div>
-
+    
             <div class="flex items-center gap-2">
               <span class="badge-role">{{ authStore.role() }}</span>
               <button type="button" class="btn-secondary" (click)="logout()">
@@ -51,14 +52,14 @@ interface NavItem {
               </button>
             </div>
           </header>
-
+    
           <main class="app-surface min-h-0 flex-1 p-4 sm:p-6">
             <router-outlet></router-outlet>
           </main>
         </section>
       </div>
     </div>
-  `
+    `
 })
 export class MainLayoutComponent {
   readonly authStore = inject(AuthStoreService);

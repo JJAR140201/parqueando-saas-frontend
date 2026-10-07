@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -9,7 +9,7 @@ import { ToastService } from '../../core/services/toast.service';
 
 @Component({
     selector: 'app-license-renewal-page',
-    imports: [CommonModule, ReactiveFormsModule, RouterLink],
+    imports: [ReactiveFormsModule, RouterLink],
     template: `
     <section class="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
       <div class="mx-auto max-w-lg animate-fade-in-up rounded-3xl bg-white p-6 shadow-card sm:p-10">

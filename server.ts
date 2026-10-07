@@ -12,7 +12,13 @@ export function app(): express.Express {
   const browserDistFolder = resolve(serverDistFolder, '../browser');
   const indexHtml = join(serverDistFolder, 'index.server.html');
 
-  const commonEngine = new CommonEngine();
+  // Angular exige declarar los hosts desde los que se acepta renderizar (proteccion SSRF/host header).
+  // Se pueden anadir mas con SSR_ALLOWED_HOSTS="app.ejemplo.com,otro.ejemplo.com".
+  const allowedHosts = ['localhost', ...(process.env['SSR_ALLOWED_HOSTS'] ?? '')
+    .split(',')
+    .map((host) => host.trim())
+    .filter(Boolean)];
+  const commonEngine = new CommonEngine({ allowedHosts });
 
   server.set('view engine', 'html');
   server.set('views', browserDistFolder);
