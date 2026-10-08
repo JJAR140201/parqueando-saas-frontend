@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -122,6 +123,19 @@ import { ParkingReportItem, ReportStatus } from '../../core/models/report.models
           </tbody>
         </table>
       </div>
+      @if (rows().length < total()) {
+        <div class="flex items-center justify-between gap-3 border-t border-slate-100 px-4 py-3 text-sm text-slate-600">
+          <span>Mostrando {{ rows().length | number }} de {{ total() | number }} registros.</span>
+          <button
+            type="button"
+            class="rounded-lg border border-slate-300 px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+            [disabled]="loading()"
+            (click)="loadMore()"
+          >
+            Cargar mas
+          </button>
+        </div>
+      }
     </section>
     `
 })
@@ -134,6 +148,8 @@ export class ParkingReportsPageComponent {
 
   readonly loading = signal(false);
   readonly rows = signal<ParkingReportItem[]>([]);
+  readonly total = signal(0);
+  private page = 0;
   readonly companies = signal<Company[]>([]);
   readonly sedes = signal<Sede[]>([]);
   readonly scopedCompanyLabel = signal('');
@@ -191,23 +207,38 @@ export class ParkingReportsPageComponent {
       return;
     }
 
+    this.fetchPage(0, false);
+  }
+
+  loadMore(): void {
+    this.fetchPage(this.page + 1, true);
+  }
+
+  private fetchPage(page: number, append: boolean): void {
     this.loading.set(true);
     this.reportService
-      .getParkingReport(this.formPayload())
+      .getParkingReportPage(this.formPayload(), page)
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next: (rows) => {
+        next: ({ rows, total }) => {
           const scopedRows = this.applyClientScope(rows);
-          this.rows.set(scopedRows);
-          this.syncScopedLabels(scopedRows);
-          this.toastService.show({
-            title: 'Reporte cargado',
-            description: `Se encontraron ${scopedRows.length} registros.`,
-            type: 'success'
-          });
+          this.page = page;
+          this.total.set(total);
+          this.rows.set(append ? [...this.rows(), ...scopedRows] : scopedRows);
+          this.syncScopedLabels(this.rows());
+          if (!append) {
+            this.toastService.show({
+              title: 'Reporte cargado',
+              description: `Se encontraron ${total} registros.`,
+              type: 'success'
+            });
+          }
         },
         error: () => {
-          this.rows.set([]);
+          if (!append) {
+            this.rows.set([]);
+            this.total.set(0);
+          }
           this.toastService.show({
             title: 'No se pudo consultar',
             description: 'Verifica filtros y disponibilidad del backend.',
@@ -223,6 +254,19 @@ export class ParkingReportsPageComponent {
 
   downloadPdf(): void {
     this.downloadFile('pdf', 'reporte-parqueo.pdf');
+  }
+
+  /** Las descargas llegan como Blob: si falla, el mensaje del backend viene dentro del Blob. */
+  private async extractErrorMessage(error: unknown): Promise<string | null> {
+    if (!(error instanceof HttpErrorResponse) || !(error.error instanceof Blob)) {
+      return null;
+    }
+    try {
+      const body = JSON.parse(await error.error.text()) as { message?: string };
+      return typeof body.message === 'string' ? body.message : null;
+    } catch {
+      return null;
+    }
   }
 
   private downloadFile(type: 'excel' | 'pdf', fileName: string): void {
@@ -243,10 +287,11 @@ export class ParkingReportsPageComponent {
           type: 'success'
         });
       },
-      error: () => {
+      error: async (error: unknown) => {
+        const detalle = await this.extractErrorMessage(error);
         this.toastService.show({
           title: 'Descarga fallida',
-          description: `No fue posible generar ${fileName}.`,
+          description: detalle ?? `No fue posible generar ${fileName}.`,
           type: 'error'
         });
       }

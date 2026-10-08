@@ -4,6 +4,8 @@ import { map, Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ConteoPorTipo, ParkingReportFilters, ParkingReportItem, ResumenDia } from '../models/report.models';
 
+export const REPORT_PAGE_SIZE = 1000;
+
 @Injectable({ providedIn: 'root' })
 export class ReportService {
   private readonly baseUrl = `${environment.apiUrl}/api/v1/reportes/parqueo`;
@@ -16,6 +18,24 @@ export class ReportService {
 
     return this.http.get<unknown>(this.baseUrl, { params }).pipe(
       map((response) => this.normalizeReportArray(response))
+    );
+  }
+
+  /** Una pagina del reporte; el total de registros viene en la cabecera X-Total-Count. */
+  getParkingReportPage(
+    filters: ParkingReportFilters,
+    page: number,
+    size = REPORT_PAGE_SIZE
+  ): Observable<{ rows: ParkingReportItem[]; total: number }> {
+    const params = this.buildParams(filters).set('page', String(page)).set('size', String(size));
+
+    return this.http.get<unknown>(this.baseUrl, { params, observe: 'response' }).pipe(
+      map((response) => {
+        const rows = this.normalizeReportArray(response.body);
+        const header = Number(response.headers.get('X-Total-Count'));
+        const total = response.headers.has('X-Total-Count') && Number.isFinite(header) ? header : rows.length;
+        return { rows, total };
+      })
     );
   }
 
