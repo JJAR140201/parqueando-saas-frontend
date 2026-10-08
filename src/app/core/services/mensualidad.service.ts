@@ -105,7 +105,10 @@ export class MensualidadService {
       empresaNombre: this.toOptionalString(item['empresaNombre'] ?? item['nombreEmpresa'] ?? item['empresa']),
       sedeNombre: this.toOptionalString(item['sedeNombre'] ?? item['nombreSede'] ?? item['sede']),
       activa: Boolean(item['activa'] ?? true),
-      vigenteHoy: Boolean(item['vigenteHoy'] ?? item['activa'] ?? true)
+      vigenteHoy: Boolean(item['vigenteHoy'] ?? item['activa'] ?? true),
+      clienteId: item['clienteId'] == null ? undefined : this.toNumber(item['clienteId']),
+      nombreCliente: this.toOptionalString(item['nombreCliente']),
+      whatsappHabilitado: item['whatsappHabilitado'] == null ? undefined : Boolean(item['whatsappHabilitado'])
     };
   }
 

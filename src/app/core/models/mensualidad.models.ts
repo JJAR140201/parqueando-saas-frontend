@@ -16,6 +16,9 @@ export interface MensualidadPayload {
   empresaId: number;
   sedeId: number;
   activa?: boolean;
+  nombreCliente?: string;
+  /** Autorizacion del cliente para recibir WhatsApp. */
+  whatsappHabilitado?: boolean;
 }
 
 export interface MensualidadItem {
@@ -32,4 +35,7 @@ export interface MensualidadItem {
   sedeNombre?: string;
   activa: boolean;
   vigenteHoy: boolean;
+  clienteId?: number;
+  nombreCliente?: string;
+  whatsappHabilitado?: boolean;
 }
