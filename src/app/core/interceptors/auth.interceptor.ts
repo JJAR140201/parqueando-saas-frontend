@@ -16,6 +16,7 @@ const AUTH_FREE_PATHS = [
 ];
 
 // Estado compartido entre requests concurrentes para no disparar varios /refresh a la vez.
+// null = renovando; '' = la renovacion fallo; otro valor = nuevo access token.
 let isRefreshing = false;
 const refreshedAccessToken$ = new BehaviorSubject<string | null>(null);
 
@@ -33,9 +34,10 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
 
   return next(authRequest).pipe(
     catchError((error: unknown) => {
-      // El backend responde 401 cuando el access token falta, es invalido o expiro. Se sigue
-      // aceptando 403 para sesiones frente a versiones anteriores del backend (que usaban 403).
-      if (isAuthFreeRequest || !(error instanceof HttpErrorResponse) || (error.status !== 401 && error.status !== 403)) {
+      // Solo un 401 indica que el access token falta, es invalido o expiro. Un 403 es un permiso
+      // denegado (por ejemplo, un ADMIN consultando una ruta de SUPER_ADMIN): no se renueva el token
+      // ni se cierra la sesion, el error le llega a la pantalla que hizo la peticion.
+      if (isAuthFreeRequest || !(error instanceof HttpErrorResponse) || error.status !== 401) {
         return throwError(() => error);
       }
 
@@ -49,7 +51,9 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
         return refreshedAccessToken$.pipe(
           filter((newToken): newToken is string => newToken !== null),
           take(1),
-          switchMap((newToken) => next(request.clone({ setHeaders: { Authorization: `Bearer ${newToken}` } })))
+          switchMap((newToken) =>
+            newToken ? next(request.clone({ setHeaders: { Authorization: `Bearer ${newToken}` } })) : throwError(() => error)
+          )
         );
       }
 
@@ -57,16 +61,19 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
       refreshedAccessToken$.next(null);
 
       return authService.refresh().pipe(
+        // La captura va ANTES del reintento: solo un fallo al renovar cierra la sesion; si la peticion
+        // reintentada falla por otra razon (403, 500...), ese error sigue su camino sin sacar al usuario.
+        catchError((refreshError) => {
+          isRefreshing = false;
+          refreshedAccessToken$.next('');
+          authStore.clearSession();
+          void router.navigateByUrl('/login');
+          return throwError(() => refreshError);
+        }),
         switchMap((session) => {
           isRefreshing = false;
           refreshedAccessToken$.next(session.accessToken);
           return next(request.clone({ setHeaders: { Authorization: `Bearer ${session.accessToken}` } }));
-        }),
-        catchError((refreshError) => {
-          isRefreshing = false;
-          authStore.clearSession();
-          void router.navigateByUrl('/login');
-          return throwError(() => refreshError);
         })
       );
     })
