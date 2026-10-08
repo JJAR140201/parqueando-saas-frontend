@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, inject, signal } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -15,10 +15,9 @@ function passwordsMatchValidator(control: AbstractControl): ValidationErrors | n
 }
 
 @Component({
-  selector: 'app-license-activation-page',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
-  template: `
+    selector: 'app-license-activation-page',
+    imports: [ReactiveFormsModule, RouterLink],
+    template: `
     <section class="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
       <div class="mx-auto max-w-2xl animate-fade-in-up rounded-3xl bg-white p-6 shadow-card sm:p-10">
         <div class="mb-6">
@@ -27,106 +26,109 @@ function passwordsMatchValidator(control: AbstractControl): ValidationErrors | n
             Ingresa el codigo de licencia que te entrego tu proveedor para crear la cuenta de tu empresa.
           </p>
         </div>
-
-        <form *ngIf="step() === 'code'" class="space-y-5" [formGroup]="codeForm" (ngSubmit)="onValidateCode()">
-          <label class="block space-y-1">
-            <span class="text-sm font-medium text-slate-700">Codigo de licencia</span>
-            <input
-              class="input-base uppercase tracking-wider"
-              formControlName="codigo"
-              placeholder="XXXXX-XXXXX-XXXXX-XXXXX-XXXXX-XXXX"
-            />
-          </label>
-          <p class="text-sm text-rose-500" *ngIf="codeError()">{{ codeError() }}</p>
-
-          <div class="flex items-center justify-between gap-2">
-            <a routerLink="/login" class="text-sm font-medium text-slate-500 hover:text-slate-700">
-              <i class="fa-solid fa-arrow-left mr-1"></i>Volver a iniciar sesion
-            </a>
-            <button class="btn-primary" type="submit" [disabled]="codeForm.invalid || loading()">
-              {{ loading() ? 'Validando...' : 'Validar codigo' }}
-            </button>
-          </div>
-        </form>
-
-        <form *ngIf="step() === 'form'" class="space-y-6" [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
-          <div class="rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            <i class="fa-solid fa-circle-check mr-2"></i>Codigo valido. Completa los datos para crear tu cuenta.
-          </div>
-
-          <div>
-            <h3 class="mb-3 text-sm font-semibold text-slate-700">Datos de tu empresa</h3>
-            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <label class="space-y-1">
-                <span class="text-sm font-medium text-slate-700">NIT</span>
-                <input class="input-base" formControlName="nit" />
+    
+        @if (step() === 'code') {
+          <form class="space-y-5" [formGroup]="codeForm" (ngSubmit)="onValidateCode()">
+            <label class="block space-y-1">
+              <span class="text-sm font-medium text-slate-700">Codigo de licencia</span>
+              <input
+                class="input-base uppercase tracking-wider"
+                formControlName="codigo"
+                placeholder="XXXXX-XXXXX-XXXXX-XXXXX-XXXXX-XXXX"
+                />
               </label>
-              <label class="space-y-1">
-                <span class="text-sm font-medium text-slate-700">Nombre de la empresa</span>
-                <input class="input-base" formControlName="nombre" />
-              </label>
-            </div>
-          </div>
-
-          <div class="space-y-3" formArrayName="sedes">
-            <div class="flex items-center justify-between">
-              <span class="text-sm font-semibold text-slate-700">Sedes</span>
-              <button class="btn-secondary" type="button" (click)="addSede()">Agregar sede</button>
-            </div>
-
-            <div
-              class="grid grid-cols-1 gap-3 rounded-xl border border-slate-200 p-3 sm:grid-cols-[1fr_140px_auto]"
-              *ngFor="let sede of sedes.controls; let i = index"
-              [formGroupName]="i"
-            >
-              <input class="input-base" placeholder="Nombre sede" formControlName="nombre" />
-              <input class="input-base" type="number" placeholder="Capacidad" formControlName="capacidadTotal" />
-              <button
-                class="rounded-lg border border-rose-200 px-3 py-2 text-rose-600"
-                type="button"
-                (click)="removeSede(i)"
-                [disabled]="sedes.length <= 1"
-              >
-                Quitar
-              </button>
-            </div>
-          </div>
-
-          <div formGroupName="admin">
-            <h3 class="mb-3 text-sm font-semibold text-slate-700">Usuario administrador</h3>
-            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <label class="space-y-1">
-                <span class="text-sm font-medium text-slate-700">Nombre completo</span>
-                <input class="input-base" formControlName="nombre" />
-              </label>
-              <label class="space-y-1">
-                <span class="text-sm font-medium text-slate-700">Username</span>
-                <input class="input-base" formControlName="username" />
-              </label>
-              <label class="space-y-1">
-                <span class="text-sm font-medium text-slate-700">Password</span>
-                <input class="input-base" type="password" formControlName="password" />
-              </label>
-              <label class="space-y-1">
-                <span class="text-sm font-medium text-slate-700">Confirmar password</span>
-                <input class="input-base" type="password" formControlName="confirmPassword" />
-              </label>
-            </div>
-            <p class="mt-1 text-xs text-rose-500" *ngIf="adminGroup.errors?.['passwordMismatch'] && adminGroup.touched">
-              Las contrasenas no coinciden.
-            </p>
-          </div>
-
-          <div class="flex justify-end gap-2">
-            <button class="btn-secondary" type="button" (click)="backToCode()">Volver</button>
-            <button class="btn-primary" type="submit" [disabled]="registrationForm.invalid || loading()">
-              {{ loading() ? 'Creando cuenta...' : 'Crear mi cuenta' }}
-            </button>
-          </div>
-        </form>
-      </div>
-    </section>
-  `
+              @if (codeError()) {
+                <p class="text-sm text-rose-500">{{ codeError() }}</p>
+              }
+              <div class="flex items-center justify-between gap-2">
+                <a routerLink="/login" class="text-sm font-medium text-slate-500 hover:text-slate-700">
+                  <i class="fa-solid fa-arrow-left mr-1"></i>Volver a iniciar sesion
+                </a>
+                <button class="btn-primary" type="submit" [disabled]="codeForm.invalid || loading()">
+                  {{ loading() ? 'Validando...' : 'Validar codigo' }}
+                </button>
+              </div>
+            </form>
+          }
+    
+          @if (step() === 'form') {
+            <form class="space-y-6" [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
+              <div class="rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                <i class="fa-solid fa-circle-check mr-2"></i>Codigo valido. Completa los datos para crear tu cuenta.
+              </div>
+              <div>
+                <h3 class="mb-3 text-sm font-semibold text-slate-700">Datos de tu empresa</h3>
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <label class="space-y-1">
+                    <span class="text-sm font-medium text-slate-700">NIT</span>
+                    <input class="input-base" formControlName="nit" />
+                  </label>
+                  <label class="space-y-1">
+                    <span class="text-sm font-medium text-slate-700">Nombre de la empresa</span>
+                    <input class="input-base" formControlName="nombre" />
+                  </label>
+                </div>
+              </div>
+              <div class="space-y-3" formArrayName="sedes">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm font-semibold text-slate-700">Sedes</span>
+                  <button class="btn-secondary" type="button" (click)="addSede()">Agregar sede</button>
+                </div>
+                @for (sede of sedes.controls; track sede; let i = $index) {
+                  <div
+                    class="grid grid-cols-1 gap-3 rounded-xl border border-slate-200 p-3 sm:grid-cols-[1fr_140px_auto]"
+                    [formGroupName]="i"
+                    >
+                    <input class="input-base" placeholder="Nombre sede" formControlName="nombre" />
+                    <input class="input-base" type="number" placeholder="Capacidad" formControlName="capacidadTotal" />
+                    <button
+                      class="rounded-lg border border-rose-200 px-3 py-2 text-rose-600"
+                      type="button"
+                      (click)="removeSede(i)"
+                      [disabled]="sedes.length <= 1"
+                      >
+                      Quitar
+                    </button>
+                  </div>
+                }
+              </div>
+              <div formGroupName="admin">
+                <h3 class="mb-3 text-sm font-semibold text-slate-700">Usuario administrador</h3>
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <label class="space-y-1">
+                    <span class="text-sm font-medium text-slate-700">Nombre completo</span>
+                    <input class="input-base" formControlName="nombre" />
+                  </label>
+                  <label class="space-y-1">
+                    <span class="text-sm font-medium text-slate-700">Username</span>
+                    <input class="input-base" formControlName="username" />
+                  </label>
+                  <label class="space-y-1">
+                    <span class="text-sm font-medium text-slate-700">Password</span>
+                    <input class="input-base" type="password" formControlName="password" />
+                  </label>
+                  <label class="space-y-1">
+                    <span class="text-sm font-medium text-slate-700">Confirmar password</span>
+                    <input class="input-base" type="password" formControlName="confirmPassword" />
+                  </label>
+                </div>
+                @if (adminGroup.errors?.['passwordMismatch'] && adminGroup.touched) {
+                  <p class="mt-1 text-xs text-rose-500">
+                    Las contrasenas no coinciden.
+                  </p>
+                }
+              </div>
+              <div class="flex justify-end gap-2">
+                <button class="btn-secondary" type="button" (click)="backToCode()">Volver</button>
+                <button class="btn-primary" type="submit" [disabled]="registrationForm.invalid || loading()">
+                  {{ loading() ? 'Creando cuenta...' : 'Crear mi cuenta' }}
+                </button>
+              </div>
+            </form>
+          }
+        </div>
+      </section>
+    `
 })
 export class LicenseActivationPageComponent {
   private readonly fb = inject(FormBuilder);

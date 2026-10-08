@@ -10,10 +10,9 @@ import { MensualidadService } from '../../core/services/mensualidad.service';
 import { ToastService } from '../../core/services/toast.service';
 
 @Component({
-  selector: 'app-mensualidades-page',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
-  template: `
+    selector: 'app-mensualidades-page',
+    imports: [CommonModule, ReactiveFormsModule],
+    template: `
     <section class="space-y-5">
       <header class="flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -22,55 +21,65 @@ import { ToastService } from '../../core/services/toast.service';
         </div>
         <span class="badge-role">{{ authStore.role() }}</span>
       </header>
-
-      <div class="rounded-xl border border-amber-200 bg-amber-50 p-4" *ngIf="proximasAVencer().length">
-        <p class="text-sm font-semibold text-amber-800">
-          <i class="fa-solid fa-triangle-exclamation mr-2"></i>{{ proximasAVencer().length }} mensualidad(es) por vencer pronto
-        </p>
-        <ul class="mt-2 space-y-1 text-sm text-amber-700">
-          <li *ngFor="let item of proximasAVencer()">
-            {{ item.placa }} — vence el {{ item.fechaFin }} ({{ diasParaVencer(item.fechaFin) }} dia(s))
-          </li>
-        </ul>
-        <p class="mt-2 text-xs text-amber-600">
-          Se cancela automaticamente al vencerse. Si el cliente paga, renueva la mensualidad manualmente (Editar).
-        </p>
-      </div>
-
+    
+      @if (proximasAVencer().length) {
+        <div class="rounded-xl border border-amber-200 bg-amber-50 p-4">
+          <p class="text-sm font-semibold text-amber-800">
+            <i class="fa-solid fa-triangle-exclamation mr-2"></i>{{ proximasAVencer().length }} mensualidad(es) por vencer pronto
+          </p>
+          <ul class="mt-2 space-y-1 text-sm text-amber-700">
+            @for (item of proximasAVencer(); track item) {
+              <li>
+                {{ item.placa }} — vence el {{ item.fechaFin }} ({{ diasParaVencer(item.fechaFin) }} dia(s))
+              </li>
+            }
+          </ul>
+          <p class="mt-2 text-xs text-amber-600">
+            Se cancela automaticamente al vencerse. Si el cliente paga, renueva la mensualidad manualmente (Editar).
+          </p>
+        </div>
+      }
+    
       <form class="grid grid-cols-1 gap-3 rounded-xl border border-slate-200 p-4 sm:grid-cols-2 lg:grid-cols-4" [formGroup]="filterForm">
-        <label class="space-y-1" *ngIf="isSuperAdmin(); else fixedEmpresaBlock">
-          <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Empresa</span>
-          <select class="input-base" formControlName="empresaId" (change)="onFilterCompanyChange()">
-            <option [ngValue]="0">Selecciona una empresa</option>
-            <option *ngFor="let company of companies()" [ngValue]="company.id ?? 0">{{ company.nombre }}</option>
-          </select>
-        </label>
-        <ng-template #fixedEmpresaBlock>
+        @if (isSuperAdmin()) {
+          <label class="space-y-1">
+            <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Empresa</span>
+            <select class="input-base" formControlName="empresaId" (change)="onFilterCompanyChange()">
+              <option [ngValue]="0">Selecciona una empresa</option>
+              @for (company of companies(); track company) {
+                <option [ngValue]="company.id ?? 0">{{ company.nombre }}</option>
+              }
+            </select>
+          </label>
+        } @else {
           <label class="space-y-1">
             <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Empresa</span>
             <input class="input-base" [value]="scopedCompanyName()" readonly />
           </label>
-        </ng-template>
-
-        <label class="space-y-1" *ngIf="isSuperAdmin(); else fixedSedeBlock">
-          <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Sede</span>
-          <select class="input-base" formControlName="sedeId">
-            <option [ngValue]="0">Todas</option>
-            <option *ngFor="let sede of sedes()" [ngValue]="sede.id ?? 0">{{ sede.nombre }}</option>
-          </select>
-        </label>
-        <ng-template #fixedSedeBlock>
+        }
+    
+        @if (isSuperAdmin()) {
+          <label class="space-y-1">
+            <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Sede</span>
+            <select class="input-base" formControlName="sedeId">
+              <option [ngValue]="0">Todas</option>
+              @for (sede of sedes(); track sede) {
+                <option [ngValue]="sede.id ?? 0">{{ sede.nombre }}</option>
+              }
+            </select>
+          </label>
+        } @else {
           <label class="space-y-1">
             <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Sede</span>
             <input class="input-base" [value]="scopedSedeName()" readonly />
           </label>
-        </ng-template>
-
+        }
+    
         <label class="space-y-1">
           <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Placa</span>
           <input class="input-base uppercase" formControlName="placa" placeholder="ABC123" />
         </label>
-
+    
         <div class="flex items-end gap-2">
           <button class="btn-primary" type="button" (click)="loadRows()" [disabled]="loading() || (isSuperAdmin() && filterForm.invalid)">
             {{ loading() ? 'Consultando...' : 'Listar' }}
@@ -78,7 +87,7 @@ import { ToastService } from '../../core/services/toast.service';
           <button class="btn-secondary" type="button" (click)="openCreate()">Nueva</button>
         </div>
       </form>
-
+    
       <div class="flex flex-wrap gap-2">
         <button class="btn-secondary" type="button" (click)="downloadExcel()" [disabled]="loading() || filterForm.invalid">
           <i class="fa-solid fa-file-excel mr-2"></i>Exportar Excel
@@ -87,13 +96,13 @@ import { ToastService } from '../../core/services/toast.service';
           <i class="fa-solid fa-file-pdf mr-2"></i>Exportar PDF
         </button>
       </div>
-
+    
       <form class="grid grid-cols-1 gap-3 rounded-xl border border-slate-200 p-4 sm:grid-cols-2 lg:grid-cols-4" [formGroup]="editForm" (ngSubmit)="save()">
         <label class="space-y-1">
           <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Placa</span>
           <input class="input-base uppercase" formControlName="placa" placeholder="ABC123" />
         </label>
-
+    
         <label class="space-y-1">
           <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Tipo Vehiculo</span>
           <select class="input-base" formControlName="tipoVehiculo">
@@ -101,12 +110,12 @@ import { ToastService } from '../../core/services/toast.service';
             <option value="MOTO">MOTO</option>
           </select>
         </label>
-
+    
         <label class="space-y-1">
           <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Valor Mensual</span>
           <input class="input-base" type="number" min="1" formControlName="valorMensual" />
         </label>
-
+    
         <label class="space-y-1">
           <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Activa</span>
           <select class="input-base" formControlName="activa">
@@ -114,50 +123,56 @@ import { ToastService } from '../../core/services/toast.service';
             <option [ngValue]="false">No</option>
           </select>
         </label>
-
+    
         <label class="space-y-1">
           <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Fecha Inicio</span>
           <input class="input-base" type="date" formControlName="fechaInicio" />
         </label>
-
+    
         <label class="space-y-1">
           <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Fecha Fin</span>
           <input class="input-base" type="date" formControlName="fechaFin" />
         </label>
-
+    
         <label class="space-y-1">
           <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Telefono</span>
           <input class="input-base" formControlName="telefono" placeholder="+573001234567" />
         </label>
-
-        <label class="space-y-1" *ngIf="isSuperAdmin(); else scopedEditEmpresaBlock">
-          <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Empresa</span>
-          <select class="input-base" formControlName="empresaId" (change)="onEditCompanyChange()">
-            <option [ngValue]="0">Selecciona una empresa</option>
-            <option *ngFor="let company of companies()" [ngValue]="company.id ?? 0">{{ company.nombre }}</option>
-          </select>
-        </label>
-        <ng-template #scopedEditEmpresaBlock>
+    
+        @if (isSuperAdmin()) {
+          <label class="space-y-1">
+            <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Empresa</span>
+            <select class="input-base" formControlName="empresaId" (change)="onEditCompanyChange()">
+              <option [ngValue]="0">Selecciona una empresa</option>
+              @for (company of companies(); track company) {
+                <option [ngValue]="company.id ?? 0">{{ company.nombre }}</option>
+              }
+            </select>
+          </label>
+        } @else {
           <label class="space-y-1">
             <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Empresa</span>
             <input class="input-base" [value]="scopedCompanyName()" readonly />
           </label>
-        </ng-template>
-
-        <label class="space-y-1" *ngIf="isSuperAdmin(); else scopedEditSedeBlock">
-          <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Sede</span>
-          <select class="input-base" formControlName="sedeId">
-            <option [ngValue]="0">Selecciona una sede</option>
-            <option *ngFor="let sede of editSedes()" [ngValue]="sede.id ?? 0">{{ sede.nombre }}</option>
-          </select>
-        </label>
-        <ng-template #scopedEditSedeBlock>
+        }
+    
+        @if (isSuperAdmin()) {
+          <label class="space-y-1">
+            <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Sede</span>
+            <select class="input-base" formControlName="sedeId">
+              <option [ngValue]="0">Selecciona una sede</option>
+              @for (sede of editSedes(); track sede) {
+                <option [ngValue]="sede.id ?? 0">{{ sede.nombre }}</option>
+              }
+            </select>
+          </label>
+        } @else {
           <label class="space-y-1">
             <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Sede</span>
             <input class="input-base" [value]="scopedSedeName()" readonly />
           </label>
-        </ng-template>
-
+        }
+    
         <div class="flex items-end gap-2">
           <button class="btn-primary" type="submit" [disabled]="saving() || editForm.invalid">
             {{ saving() ? 'Guardando...' : (editingId() ? 'Actualizar' : 'Crear') }}
@@ -165,7 +180,7 @@ import { ToastService } from '../../core/services/toast.service';
           <button class="btn-secondary" type="button" (click)="openCreate()">Limpiar</button>
         </div>
       </form>
-
+    
       <div class="overflow-x-auto rounded-xl border border-slate-200">
         <table class="min-w-full divide-y divide-slate-200 text-sm">
           <thead class="bg-slate-50 text-left text-slate-600">
@@ -181,33 +196,37 @@ import { ToastService } from '../../core/services/toast.service';
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 bg-white">
-            <tr *ngFor="let row of rows()">
-              <td class="px-4 py-3 font-medium text-slate-800">{{ row.placa }}</td>
-              <td class="px-4 py-3 text-slate-700">{{ row.tipoVehiculo }}</td>
-              <td class="px-4 py-3 text-slate-700">$ {{ row.valorMensual | number }}</td>
-              <td class="px-4 py-3 text-slate-700">{{ row.fechaInicio }}</td>
-              <td class="px-4 py-3 text-slate-700">{{ row.fechaFin }}</td>
-              <td class="px-4 py-3">
-                <span [class]="row.vigenteHoy ? 'rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700' : 'rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-600'">
-                  {{ row.vigenteHoy ? 'Si' : 'No' }}
-                </span>
-              </td>
-              <td class="px-4 py-3 text-slate-700">{{ row.telefono }}</td>
-              <td class="px-4 py-3 text-right">
-                <button class="btn-secondary mr-2" type="button" (click)="openEdit(row)">Editar</button>
-                <button class="rounded-lg border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-600" type="button" (click)="cancel(row)">
-                  Cancelar
-                </button>
-              </td>
-            </tr>
-            <tr *ngIf="!rows().length && !loading()">
-              <td class="px-4 py-8 text-center text-slate-500" colspan="8">No hay mensualidades para los filtros seleccionados.</td>
-            </tr>
+            @for (row of rows(); track row) {
+              <tr>
+                <td class="px-4 py-3 font-medium text-slate-800">{{ row.placa }}</td>
+                <td class="px-4 py-3 text-slate-700">{{ row.tipoVehiculo }}</td>
+                <td class="px-4 py-3 text-slate-700">$ {{ row.valorMensual | number }}</td>
+                <td class="px-4 py-3 text-slate-700">{{ row.fechaInicio }}</td>
+                <td class="px-4 py-3 text-slate-700">{{ row.fechaFin }}</td>
+                <td class="px-4 py-3">
+                  <span [class]="row.vigenteHoy ? 'rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700' : 'rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-600'">
+                    {{ row.vigenteHoy ? 'Si' : 'No' }}
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-slate-700">{{ row.telefono }}</td>
+                <td class="px-4 py-3 text-right">
+                  <button class="btn-secondary mr-2" type="button" (click)="openEdit(row)">Editar</button>
+                  <button class="rounded-lg border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-600" type="button" (click)="cancel(row)">
+                    Cancelar
+                  </button>
+                </td>
+              </tr>
+            }
+            @if (!rows().length && !loading()) {
+              <tr>
+                <td class="px-4 py-8 text-center text-slate-500" colspan="8">No hay mensualidades para los filtros seleccionados.</td>
+              </tr>
+            }
           </tbody>
         </table>
       </div>
     </section>
-  `
+    `
 })
 export class MensualidadesPageComponent {
   private readonly fb = inject(FormBuilder);

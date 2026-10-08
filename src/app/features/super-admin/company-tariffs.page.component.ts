@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -8,10 +8,9 @@ import { CompanyService } from '../../core/services/company.service';
 import { ToastService } from '../../core/services/toast.service';
 
 @Component({
-  selector: 'app-company-tariffs-page',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
-  template: `
+    selector: 'app-company-tariffs-page',
+    imports: [ReactiveFormsModule, RouterLink],
+    template: `
     <section class="space-y-5">
       <header class="flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -22,14 +21,16 @@ import { ToastService } from '../../core/services/toast.service';
           <i class="fa-solid fa-building mr-2"></i>Volver a empresas
         </a>
       </header>
-
+    
       <form class="rounded-xl border border-slate-200 p-4" [formGroup]="filterForm">
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto]">
           <label class="space-y-1">
             <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Empresa</span>
             <select class="input-base" formControlName="empresaId" (change)="onCompanyChange()">
               <option [ngValue]="0">Selecciona una empresa</option>
-              <option *ngFor="let company of companies()" [ngValue]="company.id ?? 0">{{ company.nombre }}</option>
+              @for (company of companies(); track company) {
+                <option [ngValue]="company.id ?? 0">{{ company.nombre }}</option>
+              }
             </select>
           </label>
           <div class="flex items-end gap-2">
@@ -39,55 +40,58 @@ import { ToastService } from '../../core/services/toast.service';
           </div>
         </div>
       </form>
-
-      <form class="space-y-4" [formGroup]="form" (ngSubmit)="save()" *ngIf="selectedCompany() as company">
-        <div class="flex items-center justify-between">
-          <div>
-            <h4 class="text-lg font-semibold text-slate-900">{{ company.nombre }}</h4>
-            <p class="text-sm text-slate-500">Edita las tarifas activas para cada sede.</p>
+    
+      @if (selectedCompany(); as company) {
+        <form class="space-y-4" [formGroup]="form" (ngSubmit)="save()">
+          <div class="flex items-center justify-between">
+            <div>
+              <h4 class="text-lg font-semibold text-slate-900">{{ company.nombre }}</h4>
+              <p class="text-sm text-slate-500">Edita las tarifas activas para cada sede.</p>
+            </div>
+            <button class="btn-primary" type="submit" [disabled]="saving() || form.invalid || !sedes.length">
+              {{ saving() ? 'Guardando...' : 'Guardar tarifas' }}
+            </button>
           </div>
-          <button class="btn-primary" type="submit" [disabled]="saving() || form.invalid || !sedes.length">
-            {{ saving() ? 'Guardando...' : 'Guardar tarifas' }}
-          </button>
-        </div>
-
-        <div class="space-y-3" formArrayName="sedes">
-          <div class="rounded-xl border border-slate-200 p-4" *ngFor="let sede of sedes.controls; let i = index" [formGroupName]="i">
-            <div class="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
-              <div>
-                <h5 class="font-semibold text-slate-900">{{ sedeName(i) }}</h5>
-                <p class="text-xs text-slate-500">Capacidad: {{ sedeCapacity(i) }}</p>
+          <div class="space-y-3" formArrayName="sedes">
+            @for (sede of sedes.controls; track sede; let i = $index) {
+              <div class="rounded-xl border border-slate-200 p-4" [formGroupName]="i">
+                <div class="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                  <div>
+                    <h5 class="font-semibold text-slate-900">{{ sedeName(i) }}</h5>
+                    <p class="text-xs text-slate-500">Capacidad: {{ sedeCapacity(i) }}</p>
+                  </div>
+                  <span class="badge-role">Sede</span>
+                </div>
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  <label class="space-y-1">
+                    <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Tarifa carro</span>
+                    <input class="input-base" type="number" min="0" formControlName="valorFraccionCarro" />
+                  </label>
+                  <label class="space-y-1">
+                    <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Minutos carro</span>
+                    <input class="input-base" type="number" min="0" formControlName="minutosFraccionCarro" />
+                  </label>
+                  <label class="space-y-1">
+                    <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Tarifa moto</span>
+                    <input class="input-base" type="number" min="0" formControlName="valorFraccionMoto" />
+                  </label>
+                  <label class="space-y-1">
+                    <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Minutos moto</span>
+                    <input class="input-base" type="number" min="0" formControlName="minutosFraccionMoto" />
+                  </label>
+                </div>
               </div>
-              <span class="badge-role">Sede</span>
-            </div>
-
-            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <label class="space-y-1">
-                <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Tarifa carro</span>
-                <input class="input-base" type="number" min="0" formControlName="valorFraccionCarro" />
-              </label>
-              <label class="space-y-1">
-                <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Minutos carro</span>
-                <input class="input-base" type="number" min="0" formControlName="minutosFraccionCarro" />
-              </label>
-              <label class="space-y-1">
-                <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Tarifa moto</span>
-                <input class="input-base" type="number" min="0" formControlName="valorFraccionMoto" />
-              </label>
-              <label class="space-y-1">
-                <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Minutos moto</span>
-                <input class="input-base" type="number" min="0" formControlName="minutosFraccionMoto" />
-              </label>
-            </div>
+            }
           </div>
-        </div>
-
-        <div class="rounded-xl border border-dashed border-slate-200 px-4 py-6 text-center text-sm text-slate-500" *ngIf="!sedes.length && !loading()">
-          La empresa seleccionada no tiene sedes registradas.
-        </div>
-      </form>
+          @if (!sedes.length && !loading()) {
+            <div class="rounded-xl border border-dashed border-slate-200 px-4 py-6 text-center text-sm text-slate-500">
+              La empresa seleccionada no tiene sedes registradas.
+            </div>
+          }
+        </form>
+      }
     </section>
-  `
+    `
 })
 export class CompanyTariffsPageComponent {
   private readonly fb = inject(FormBuilder);

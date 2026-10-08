@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, inject, signal } from '@angular/core';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -8,10 +8,9 @@ import { CompanyService } from '../../core/services/company.service';
 import { ToastService } from '../../core/services/toast.service';
 
 @Component({
-  selector: 'app-company-management-page',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
-  template: `
+    selector: 'app-company-management-page',
+    imports: [ReactiveFormsModule],
+    template: `
     <section class="space-y-5">
       <header class="flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -27,97 +26,100 @@ import { ToastService } from '../../core/services/toast.service';
           </button>
         </div>
       </header>
-
+    
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto]">
         <input
           class="input-base"
           placeholder="Buscar por NIT o nombre"
           [value]="search()"
           (input)="search.set($any($event.target).value)"
-        />
-        <button class="btn-secondary" type="button" (click)="loadCompanies()">Buscar</button>
-      </div>
-
-      <div class="overflow-x-auto rounded-xl border border-slate-200">
-        <table class="min-w-full divide-y divide-slate-200 text-sm">
-          <thead class="bg-slate-50 text-left text-slate-600">
-            <tr>
-              <th class="px-4 py-3 font-semibold">NIT</th>
-              <th class="px-4 py-3 font-semibold">Nombre</th>
-              <th class="px-4 py-3 font-semibold">Sedes</th>
-              <th class="px-4 py-3 text-right font-semibold">Acciones</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100 bg-white">
-            <tr *ngFor="let company of companies()">
-              <td class="px-4 py-3 font-medium text-slate-800">{{ company.nit }}</td>
-              <td class="px-4 py-3 text-slate-700">{{ company.nombre }}</td>
-              <td class="px-4 py-3 text-slate-700">{{ getSedesLabel(company) }}</td>
-              <td class="px-4 py-3 text-right">
-                <button class="btn-secondary mr-2" (click)="goToTarifas(company.id)">Tarifas</button>
-                <button class="btn-secondary mr-2" (click)="openEdit(company)">Editar</button>
-                <button class="rounded-lg bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-600" (click)="remove(company)">
-                  Eliminar
+          />
+          <button class="btn-secondary" type="button" (click)="loadCompanies()">Buscar</button>
+        </div>
+    
+        <div class="overflow-x-auto rounded-xl border border-slate-200">
+          <table class="min-w-full divide-y divide-slate-200 text-sm">
+            <thead class="bg-slate-50 text-left text-slate-600">
+              <tr>
+                <th class="px-4 py-3 font-semibold">NIT</th>
+                <th class="px-4 py-3 font-semibold">Nombre</th>
+                <th class="px-4 py-3 font-semibold">Sedes</th>
+                <th class="px-4 py-3 text-right font-semibold">Acciones</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 bg-white">
+              @for (company of companies(); track company) {
+                <tr>
+                  <td class="px-4 py-3 font-medium text-slate-800">{{ company.nit }}</td>
+                  <td class="px-4 py-3 text-slate-700">{{ company.nombre }}</td>
+                  <td class="px-4 py-3 text-slate-700">{{ getSedesLabel(company) }}</td>
+                  <td class="px-4 py-3 text-right">
+                    <button class="btn-secondary mr-2" (click)="goToTarifas(company.id)">Tarifas</button>
+                    <button class="btn-secondary mr-2" (click)="openEdit(company)">Editar</button>
+                    <button class="rounded-lg bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-600" (click)="remove(company)">
+                      Eliminar
+                    </button>
+                  </td>
+                </tr>
+              }
+              @if (!companies().length && !loading()) {
+                <tr>
+                  <td class="px-4 py-8 text-center text-slate-500" colspan="4">No hay empresas registradas.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+    
+        @if (showForm()) {
+          <div class="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/50 p-4">
+            <div class="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-card">
+              <div class="mb-4 flex items-center justify-between">
+                <h4 class="text-lg font-semibold text-slate-900">{{ editingId() ? 'Editar empresa' : 'Nueva empresa' }}</h4>
+                <button class="text-slate-400" type="button" (click)="closeForm()">
+                  <i class="fa-solid fa-xmark"></i>
                 </button>
-              </td>
-            </tr>
-            <tr *ngIf="!companies().length && !loading()">
-              <td class="px-4 py-8 text-center text-slate-500" colspan="4">No hay empresas registradas.</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/50 p-4" *ngIf="showForm()">
-        <div class="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-card">
-          <div class="mb-4 flex items-center justify-between">
-            <h4 class="text-lg font-semibold text-slate-900">{{ editingId() ? 'Editar empresa' : 'Nueva empresa' }}</h4>
-            <button class="text-slate-400" type="button" (click)="closeForm()">
-              <i class="fa-solid fa-xmark"></i>
-            </button>
-          </div>
-
-          <form class="space-y-4" [formGroup]="form" (ngSubmit)="save()">
-            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <label class="space-y-1">
-                <span class="text-sm font-medium text-slate-700">NIT</span>
-                <input class="input-base" formControlName="nit" />
-              </label>
-              <label class="space-y-1">
-                <span class="text-sm font-medium text-slate-700">Nombre</span>
-                <input class="input-base" formControlName="nombre" />
-              </label>
-            </div>
-
-            <div class="space-y-3" formArrayName="sedes">
-              <div class="flex items-center justify-between">
-                <span class="text-sm font-semibold text-slate-700">Sedes</span>
-                <button class="btn-secondary" type="button" (click)="addSede()">Agregar sede</button>
               </div>
-
-              <div class="grid grid-cols-1 gap-3 rounded-xl border border-slate-200 p-3" *ngFor="let sede of sedes.controls; let i = index" [formGroupName]="i">
-                <div class="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_140px_auto]">
-                  <input class="input-base" placeholder="Nombre sede" formControlName="nombre" />
-                  <input class="input-base" type="number" placeholder="Capacidad" formControlName="capacidad" />
-                  <button class="rounded-lg border border-rose-200 px-3 py-2 text-rose-600" type="button" (click)="removeSede(i)">
-                    Quitar
+              <form class="space-y-4" [formGroup]="form" (ngSubmit)="save()">
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <label class="space-y-1">
+                    <span class="text-sm font-medium text-slate-700">NIT</span>
+                    <input class="input-base" formControlName="nit" />
+                  </label>
+                  <label class="space-y-1">
+                    <span class="text-sm font-medium text-slate-700">Nombre</span>
+                    <input class="input-base" formControlName="nombre" />
+                  </label>
+                </div>
+                <div class="space-y-3" formArrayName="sedes">
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm font-semibold text-slate-700">Sedes</span>
+                    <button class="btn-secondary" type="button" (click)="addSede()">Agregar sede</button>
+                  </div>
+                  @for (sede of sedes.controls; track sede; let i = $index) {
+                    <div class="grid grid-cols-1 gap-3 rounded-xl border border-slate-200 p-3" [formGroupName]="i">
+                      <div class="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_140px_auto]">
+                        <input class="input-base" placeholder="Nombre sede" formControlName="nombre" />
+                        <input class="input-base" type="number" placeholder="Capacidad" formControlName="capacidad" />
+                        <button class="rounded-lg border border-rose-200 px-3 py-2 text-rose-600" type="button" (click)="removeSede(i)">
+                          Quitar
+                        </button>
+                      </div>
+                    </div>
+                  }
+                </div>
+                <div class="flex justify-end gap-2">
+                  <button class="btn-secondary" type="button" (click)="closeForm()">Cancelar</button>
+                  <button class="btn-primary" type="submit" [disabled]="form.invalid || loading()">
+                    {{ loading() ? 'Guardando...' : 'Guardar' }}
                   </button>
                 </div>
-
-              </div>
+              </form>
             </div>
-
-            <div class="flex justify-end gap-2">
-              <button class="btn-secondary" type="button" (click)="closeForm()">Cancelar</button>
-              <button class="btn-primary" type="submit" [disabled]="form.invalid || loading()">
-                {{ loading() ? 'Guardando...' : 'Guardar' }}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </section>
-  `
+          </div>
+        }
+      </section>
+    `
 })
 export class CompanyManagementPageComponent {
   private readonly fb = inject(FormBuilder);

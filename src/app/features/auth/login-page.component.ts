@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -8,10 +8,9 @@ import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
 
 @Component({
-  selector: 'app-login-page',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
-  template: `
+    selector: 'app-login-page',
+    imports: [ReactiveFormsModule, RouterLink],
+    template: `
     <section class="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
       <div class="mx-auto grid min-h-[88vh] max-w-5xl animate-fade-in-up grid-cols-1 overflow-hidden rounded-3xl bg-white shadow-card lg:grid-cols-[1.2fr_1fr]">
         <div class="hidden bg-slate-900 p-10 text-white lg:block">
@@ -28,22 +27,24 @@ import { ToastService } from '../../core/services/toast.service';
             <p><i class="fa-solid fa-check mr-2 text-emerald-400"></i>Diseño responsivo para operación en campo</p>
           </div>
         </div>
-
+    
         <div class="flex items-center p-6 sm:p-10">
           <form class="w-full space-y-5" [formGroup]="form" (ngSubmit)="onSubmit()">
             <div>
               <h2 class="text-2xl font-semibold text-slate-900">Iniciar Sesion</h2>
               <p class="text-sm text-slate-500">Accede con tus credenciales para continuar.</p>
             </div>
-
+    
             <label class="block space-y-1">
               <span class="text-sm font-medium text-slate-700">Username</span>
               <input class="input-base" formControlName="username" placeholder="ej: admin.parqueadero" />
-              <small class="text-xs text-rose-500" *ngIf="form.controls.username.invalid && form.controls.username.touched">
-                El username es obligatorio.
-              </small>
+              @if (form.controls.username.invalid && form.controls.username.touched) {
+                <small class="text-xs text-rose-500">
+                  El username es obligatorio.
+                </small>
+              }
             </label>
-
+    
             <label class="block space-y-1">
               <span class="text-sm font-medium text-slate-700">Password</span>
               <div class="relative">
@@ -52,38 +53,40 @@ import { ToastService } from '../../core/services/toast.service';
                   [type]="showPassword() ? 'text' : 'password'"
                   formControlName="password"
                   placeholder="********"
-                />
-                <button
-                  class="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-slate-500 hover:text-slate-700"
-                  type="button"
-                  (click)="showPassword.set(!showPassword())"
-                  [attr.aria-label]="showPassword() ? 'Ocultar password' : 'Mostrar password'"
-                >
-                  <i class="fa-solid" [class.fa-eye]="!showPassword()" [class.fa-eye-slash]="showPassword()"></i>
-                </button>
-              </div>
-              <small class="text-xs text-rose-500" *ngIf="form.controls.password.invalid && form.controls.password.touched">
-                El password es obligatorio.
-              </small>
-            </label>
-
-            <button class="btn-primary w-full" type="submit" [disabled]="form.invalid || loading()">
-              {{ loading() ? 'Validando...' : 'Entrar' }}
-            </button>
-
-            <p class="text-center text-sm text-slate-500">
-              ¿Eres un nuevo cliente?
-              <a routerLink="/activar" class="font-semibold text-cyan-600 hover:underline">Activa tu licencia</a>
-            </p>
-            <p class="text-center text-sm text-slate-500">
-              ¿Tu licencia venció?
-              <a routerLink="/renovar" class="font-semibold text-cyan-600 hover:underline">Renuévala</a>
-            </p>
-          </form>
+                  />
+                  <button
+                    class="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-slate-500 hover:text-slate-700"
+                    type="button"
+                    (click)="showPassword.set(!showPassword())"
+                    [attr.aria-label]="showPassword() ? 'Ocultar password' : 'Mostrar password'"
+                    >
+                    <i class="fa-solid" [class.fa-eye]="!showPassword()" [class.fa-eye-slash]="showPassword()"></i>
+                  </button>
+                </div>
+                @if (form.controls.password.invalid && form.controls.password.touched) {
+                  <small class="text-xs text-rose-500">
+                    El password es obligatorio.
+                  </small>
+                }
+              </label>
+    
+              <button class="btn-primary w-full" type="submit" [disabled]="form.invalid || loading()">
+                {{ loading() ? 'Validando...' : 'Entrar' }}
+              </button>
+    
+              <p class="text-center text-sm text-slate-500">
+                ¿Eres un nuevo cliente?
+                <a routerLink="/activar" class="font-semibold text-cyan-600 hover:underline">Activa tu licencia</a>
+              </p>
+              <p class="text-center text-sm text-slate-500">
+                ¿Tu licencia venció?
+                <a routerLink="/renovar" class="font-semibold text-cyan-600 hover:underline">Renuévala</a>
+              </p>
+            </form>
+          </div>
         </div>
-      </div>
-    </section>
-  `
+      </section>
+    `
 })
 export class LoginPageComponent {
   private readonly fb = inject(FormBuilder);

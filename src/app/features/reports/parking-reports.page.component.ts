@@ -10,10 +10,9 @@ import { ToastService } from '../../core/services/toast.service';
 import { ParkingReportItem, ReportStatus } from '../../core/models/report.models';
 
 @Component({
-  selector: 'app-parking-reports-page',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
-  template: `
+    selector: 'app-parking-reports-page',
+    imports: [CommonModule, ReactiveFormsModule],
+    template: `
     <section class="space-y-5">
       <header class="flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -22,56 +21,64 @@ import { ParkingReportItem, ReportStatus } from '../../core/models/report.models
         </div>
         <span class="badge-role">{{ authStore.role() }}</span>
       </header>
-
+    
       <form class="grid grid-cols-1 gap-3 rounded-xl border border-slate-200 p-4 sm:grid-cols-2 lg:grid-cols-4" [formGroup]="form">
-        <label class="space-y-1" *ngIf="isSuperAdmin(); else fixedEmpresaBlock">
-          <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Empresa</span>
-          <select class="input-base" formControlName="empresaId" (change)="onCompanyChange()">
-            <option [ngValue]="0">Todas</option>
-            <option *ngFor="let company of companies()" [ngValue]="company.id ?? 0">{{ company.nombre }}</option>
-          </select>
-        </label>
-        <ng-template #fixedEmpresaBlock>
+        @if (isSuperAdmin()) {
+          <label class="space-y-1">
+            <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Empresa</span>
+            <select class="input-base" formControlName="empresaId" (change)="onCompanyChange()">
+              <option [ngValue]="0">Todas</option>
+              @for (company of companies(); track company) {
+                <option [ngValue]="company.id ?? 0">{{ company.nombre }}</option>
+              }
+            </select>
+          </label>
+        } @else {
           <label class="space-y-1">
             <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Empresa</span>
             <input class="input-base" [value]="scopedCompanyName()" readonly />
           </label>
-        </ng-template>
-
-        <label class="space-y-1" *ngIf="isSuperAdmin(); else fixedSedeBlock">
-          <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Sede</span>
-          <select class="input-base" formControlName="sedeId">
-            <option [ngValue]="0">Todas</option>
-            <option *ngFor="let sede of sedes()" [ngValue]="sede.id ?? 0">{{ sede.nombre }}</option>
-          </select>
-        </label>
-        <ng-template #fixedSedeBlock>
+        }
+    
+        @if (isSuperAdmin()) {
+          <label class="space-y-1">
+            <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Sede</span>
+            <select class="input-base" formControlName="sedeId">
+              <option [ngValue]="0">Todas</option>
+              @for (sede of sedes(); track sede) {
+                <option [ngValue]="sede.id ?? 0">{{ sede.nombre }}</option>
+              }
+            </select>
+          </label>
+        } @else {
           <label class="space-y-1">
             <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Sede</span>
             <input class="input-base" [value]="scopedSedeName()" readonly />
           </label>
-        </ng-template>
-
+        }
+    
         <label class="space-y-1">
           <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Estado</span>
           <select class="input-base" formControlName="estado">
             <option value="">Todos</option>
-            <option *ngFor="let status of statuses" [value]="status">{{ status }}</option>
+            @for (status of statuses; track status) {
+              <option [value]="status">{{ status }}</option>
+            }
           </select>
         </label>
-
-
+    
+    
         <label class="space-y-1">
           <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Desde</span>
           <input class="input-base" type="date" formControlName="desde" />
         </label>
-
+    
         <label class="space-y-1">
           <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Hasta</span>
           <input class="input-base" type="date" formControlName="hasta" />
         </label>
       </form>
-
+    
       <div class="flex flex-wrap gap-2">
         <button class="btn-primary" type="button" (click)="loadReport()" [disabled]="loading() || form.invalid">
           {{ loading() ? 'Consultando...' : 'Consultar JSON' }}
@@ -83,7 +90,7 @@ import { ParkingReportItem, ReportStatus } from '../../core/models/report.models
           <i class="fa-solid fa-file-pdf mr-2"></i>Descargar PDF
         </button>
       </div>
-
+    
       <div class="overflow-x-auto rounded-xl border border-slate-200">
         <table class="min-w-full divide-y divide-slate-200 text-sm">
           <thead class="bg-slate-50 text-left text-slate-600">
@@ -97,22 +104,26 @@ import { ParkingReportItem, ReportStatus } from '../../core/models/report.models
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 bg-white">
-            <tr *ngFor="let item of rows()">
-              <td class="px-4 py-3 font-medium text-slate-800">{{ item.placa }}</td>
-              <td class="px-4 py-3 text-slate-700">{{ item.tipoVehiculo || '-' }}</td>
-              <td class="px-4 py-3 text-slate-700">{{ item.estado || '-' }}</td>
-              <td class="px-4 py-3 text-slate-700">{{ item.fechaIngreso || '-' }}</td>
-              <td class="px-4 py-3 text-slate-700">{{ item.fechaSalida || '-' }}</td>
-              <td class="px-4 py-3 text-slate-700">{{ item.totalCobrado ?? 0 | number }}</td>
-            </tr>
-            <tr *ngIf="!rows().length && !loading()">
-              <td class="px-4 py-8 text-center text-slate-500" colspan="6">No hay registros para los filtros seleccionados.</td>
-            </tr>
+            @for (item of rows(); track item) {
+              <tr>
+                <td class="px-4 py-3 font-medium text-slate-800">{{ item.placa }}</td>
+                <td class="px-4 py-3 text-slate-700">{{ item.tipoVehiculo || '-' }}</td>
+                <td class="px-4 py-3 text-slate-700">{{ item.estado || '-' }}</td>
+                <td class="px-4 py-3 text-slate-700">{{ item.fechaIngreso || '-' }}</td>
+                <td class="px-4 py-3 text-slate-700">{{ item.fechaSalida || '-' }}</td>
+                <td class="px-4 py-3 text-slate-700">{{ item.totalCobrado ?? 0 | number }}</td>
+              </tr>
+            }
+            @if (!rows().length && !loading()) {
+              <tr>
+                <td class="px-4 py-8 text-center text-slate-500" colspan="6">No hay registros para los filtros seleccionados.</td>
+              </tr>
+            }
           </tbody>
         </table>
       </div>
     </section>
-  `
+    `
 })
 export class ParkingReportsPageComponent {
   private readonly fb = inject(FormBuilder);

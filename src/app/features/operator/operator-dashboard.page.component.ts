@@ -7,21 +7,20 @@ import { ParkingService } from '../../core/services/parking.service';
 import { ToastService } from '../../core/services/toast.service';
 
 @Component({
-  selector: 'app-operator-dashboard-page',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
-  template: `
+    selector: 'app-operator-dashboard-page',
+    imports: [CommonModule, ReactiveFormsModule],
+    template: `
     <section class="grid grid-cols-1 gap-5 lg:grid-cols-2">
       <article class="rounded-2xl border border-slate-200 p-5">
         <h3 class="text-lg font-semibold text-slate-900">Registro de Entrada</h3>
         <p class="mb-4 text-sm text-slate-500">Registra la llegada de un vehiculo al parqueadero.</p>
-
+    
         <form class="space-y-3" [formGroup]="entradaForm" (ngSubmit)="registrarEntrada()">
           <label class="space-y-1">
             <span class="text-sm font-medium text-slate-700">Placa</span>
             <input class="input-base uppercase" formControlName="placa" placeholder="ABC123" />
           </label>
-
+    
           <label class="space-y-1">
             <span class="text-sm font-medium text-slate-700">Tipo de vehiculo</span>
             <select class="input-base" formControlName="tipoVehiculo">
@@ -29,62 +28,70 @@ import { ToastService } from '../../core/services/toast.service';
               <option value="MOTO">MOTO</option>
             </select>
           </label>
-
+    
           <button class="btn-primary w-full" [disabled]="loadingEntrada() || entradaForm.invalid" type="submit">
             {{ loadingEntrada() ? 'Registrando...' : 'Registrar entrada' }}
           </button>
         </form>
       </article>
-
+    
       <article class="rounded-2xl border border-slate-200 p-5">
         <h3 class="text-lg font-semibold text-slate-900">Registro de Salida</h3>
         <p class="mb-4 text-sm text-slate-500">Consulta la placa, valida cobro y confirma salida.</p>
-
+    
         <form class="space-y-3" [formGroup]="salidaForm" (ngSubmit)="consultarCobro()">
           <label class="space-y-1">
             <span class="text-sm font-medium text-slate-700">Placa</span>
             <input class="input-base uppercase" formControlName="placa" placeholder="ABC123" />
           </label>
-
+    
           <button class="btn-secondary w-full" type="submit" [disabled]="loadingSalida() || salidaForm.invalid">
             {{ loadingSalida() ? 'Consultando...' : 'Calcular cobro' }}
           </button>
         </form>
-
-        <div class="mt-4 rounded-xl bg-slate-50 p-4" *ngIf="resumenSalida() as resumen">
-          <h4 class="font-semibold text-slate-900">Resumen de cobro</h4>
-          <dl class="mt-3 grid grid-cols-2 gap-2 text-sm text-slate-700">
-            <dt>Placa</dt>
-            <dd class="text-right font-semibold">{{ resumen.placa }}</dd>
-            <dt>Tipo</dt>
-            <dd class="text-right font-semibold">{{ resumen.tipoVehiculo }}</dd>
-            <dt *ngIf="resumen.minutosEstadia !== undefined">Minutos</dt>
-            <dd *ngIf="resumen.minutosEstadia !== undefined" class="text-right font-semibold">{{ resumen.minutosEstadia }}</dd>
-            <dt>Horas</dt>
-            <dd class="text-right font-semibold">{{ resumen.horas | number:'1.1-2' }}</dd>
-            <dt>Total</dt>
-            <dd class="text-right text-base font-bold text-emerald-600">$ {{ resumen.totalPagado | number }}</dd>
-          </dl>
-
-          <div class="space-y-3 pt-3" *ngIf="!salidaConfirmada()">
-            <p class="text-xs font-medium text-slate-500 uppercase tracking-wide">Opciones antes de confirmar</p>
-            <button class="btn-secondary w-full" type="button" (click)="descargarTicket()" [disabled]="loadingTicket()">
-              {{ loadingTicket() ? 'Generando ticket...' : 'Imprimir ticket' }}
-            </button>
+    
+        @if (resumenSalida(); as resumen) {
+          <div class="mt-4 rounded-xl bg-slate-50 p-4">
+            <h4 class="font-semibold text-slate-900">Resumen de cobro</h4>
+            <dl class="mt-3 grid grid-cols-2 gap-2 text-sm text-slate-700">
+              <dt>Placa</dt>
+              <dd class="text-right font-semibold">{{ resumen.placa }}</dd>
+              <dt>Tipo</dt>
+              <dd class="text-right font-semibold">{{ resumen.tipoVehiculo }}</dd>
+              @if (resumen.minutosEstadia !== undefined) {
+                <dt>Minutos</dt>
+              }
+              @if (resumen.minutosEstadia !== undefined) {
+                <dd class="text-right font-semibold">{{ resumen.minutosEstadia }}</dd>
+              }
+              <dt>Horas</dt>
+              <dd class="text-right font-semibold">{{ resumen.horas | number:'1.1-2' }}</dd>
+              <dt>Total</dt>
+              <dd class="text-right text-base font-bold text-emerald-600">$ {{ resumen.totalPagado | number }}</dd>
+            </dl>
+            @if (!salidaConfirmada()) {
+              <div class="space-y-3 pt-3">
+                <p class="text-xs font-medium text-slate-500 uppercase tracking-wide">Opciones antes de confirmar</p>
+                <button class="btn-secondary w-full" type="button" (click)="descargarTicket()" [disabled]="loadingTicket()">
+                  {{ loadingTicket() ? 'Generando ticket...' : 'Imprimir ticket' }}
+                </button>
+              </div>
+            }
+            <div class="mt-3 space-y-3">
+              <button class="btn-primary w-full" type="button" (click)="confirmarSalida()" [disabled]="loadingSalida() || salidaConfirmada()">
+                {{ loadingSalida() ? 'Confirmando salida...' : salidaConfirmada() ? 'Salida confirmada' : 'Confirmar salida' }}
+              </button>
+              @if (salidaConfirmada()) {
+                <button class="btn-secondary w-full" type="button" (click)="nuevaSalida()">
+                  Nueva salida
+                </button>
+              }
+            </div>
           </div>
-
-          <div class="mt-3 space-y-3">
-            <button class="btn-primary w-full" type="button" (click)="confirmarSalida()" [disabled]="loadingSalida() || salidaConfirmada()">
-              {{ loadingSalida() ? 'Confirmando salida...' : salidaConfirmada() ? 'Salida confirmada' : 'Confirmar salida' }}
-            </button>
-            <button *ngIf="salidaConfirmada()" class="btn-secondary w-full" type="button" (click)="nuevaSalida()">
-              Nueva salida
-            </button>
-          </div>
-        </div>
+        }
       </article>
     </section>
-  `
+    `
 })
 export class OperatorDashboardPageComponent {
   private readonly fb = inject(FormBuilder);

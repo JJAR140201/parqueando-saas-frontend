@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { catchError, finalize, forkJoin, map, of } from 'rxjs';
@@ -11,10 +11,9 @@ import { ToastService } from '../../core/services/toast.service';
 import { UserService } from '../../core/services/user.service';
 
 @Component({
-  selector: 'app-user-management-page',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
-  template: `
+    selector: 'app-user-management-page',
+    imports: [ReactiveFormsModule],
+    template: `
     <section class="space-y-5">
       <header>
         <h3 class="text-xl font-semibold text-slate-900">Gestion de Usuarios</h3>
@@ -22,18 +21,18 @@ import { UserService } from '../../core/services/user.service';
           {{ isSuperAdmin() ? 'SUPER_ADMIN: visualiza todos los usuarios del sistema.' : 'ADMIN: visualiza operarios de su empresa y sedes.' }}
         </p>
       </header>
-
+    
       <form class="grid grid-cols-1 gap-3 rounded-xl border border-slate-200 p-4 sm:grid-cols-2 lg:grid-cols-3" [formGroup]="form" (ngSubmit)="save()">
         <label class="space-y-1">
           <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Nombre</span>
           <input class="input-base" formControlName="nombre" />
         </label>
-
+    
         <label class="space-y-1">
           <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Username</span>
           <input class="input-base" formControlName="username" />
         </label>
-
+    
         <label class="space-y-1">
           <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Password</span>
           <div class="relative">
@@ -41,73 +40,83 @@ import { UserService } from '../../core/services/user.service';
               class="input-base pr-10"
               [type]="showPassword() ? 'text' : 'password'"
               formControlName="password"
-            />
-            <button
-              class="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-slate-500 hover:text-slate-700"
-              type="button"
-              (click)="showPassword.set(!showPassword())"
-              [attr.aria-label]="showPassword() ? 'Ocultar password' : 'Mostrar password'"
-            >
-              <i class="fa-solid" [class.fa-eye]="!showPassword()" [class.fa-eye-slash]="showPassword()"></i>
-            </button>
+              />
+              <button
+                class="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-slate-500 hover:text-slate-700"
+                type="button"
+                (click)="showPassword.set(!showPassword())"
+                [attr.aria-label]="showPassword() ? 'Ocultar password' : 'Mostrar password'"
+                >
+                <i class="fa-solid" [class.fa-eye]="!showPassword()" [class.fa-eye-slash]="showPassword()"></i>
+              </button>
+            </div>
+          </label>
+    
+          <label class="space-y-1">
+            <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Rol</span>
+            <select class="input-base" formControlName="role" [disabled]="isAdmin()">
+              @for (role of roles; track role) {
+                <option [value]="role">{{ role }}</option>
+              }
+            </select>
+          </label>
+    
+          <label class="space-y-1">
+            <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Empresa</span>
+            <select class="input-base" formControlName="empresaId" (change)="onCompanyChange()" [disabled]="isAdmin()">
+              <option value="">Selecciona</option>
+              @for (company of companies(); track company) {
+                <option [value]="company.id">{{ company.nombre }}</option>
+              }
+            </select>
+          </label>
+    
+          <label class="space-y-1">
+            <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Sede</span>
+            <select class="input-base" formControlName="sedeId">
+              <option value="">Selecciona</option>
+              @for (sede of sedes(); track sede) {
+                <option [value]="sede.id">{{ sede.nombre }}</option>
+              }
+            </select>
+          </label>
+    
+          <div class="flex items-end">
+            <button class="btn-primary w-full" type="submit" [disabled]="form.invalid || loading()">Crear usuario</button>
           </div>
-        </label>
-
-        <label class="space-y-1">
-          <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Rol</span>
-          <select class="input-base" formControlName="role" [disabled]="isAdmin()">
-            <option *ngFor="let role of roles" [value]="role">{{ role }}</option>
-          </select>
-        </label>
-
-        <label class="space-y-1">
-          <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Empresa</span>
-          <select class="input-base" formControlName="empresaId" (change)="onCompanyChange()" [disabled]="isAdmin()">
-            <option value="">Selecciona</option>
-            <option *ngFor="let company of companies()" [value]="company.id">{{ company.nombre }}</option>
-          </select>
-        </label>
-
-        <label class="space-y-1">
-          <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Sede</span>
-          <select class="input-base" formControlName="sedeId">
-            <option value="">Selecciona</option>
-            <option *ngFor="let sede of sedes()" [value]="sede.id">{{ sede.nombre }}</option>
-          </select>
-        </label>
-
-        <div class="flex items-end">
-          <button class="btn-primary w-full" type="submit" [disabled]="form.invalid || loading()">Crear usuario</button>
+        </form>
+    
+        <div class="overflow-x-auto rounded-xl border border-slate-200">
+          <table class="min-w-full divide-y divide-slate-200 text-sm">
+            <thead class="bg-slate-50 text-left text-slate-600">
+              <tr>
+                <th class="px-4 py-3 font-semibold">Nombre</th>
+                <th class="px-4 py-3 font-semibold">Usuario</th>
+                <th class="px-4 py-3 font-semibold">Rol</th>
+                <th class="px-4 py-3 font-semibold">Empresa</th>
+                <th class="px-4 py-3 font-semibold">Sede</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 bg-white">
+              @for (user of users(); track user) {
+                <tr>
+                  <td class="px-4 py-3">{{ user.nombre || '-' }}</td>
+                  <td class="px-4 py-3">{{ user.username }}</td>
+                  <td class="px-4 py-3"><span class="badge-role">{{ user.role }}</span></td>
+                  <td class="px-4 py-3">{{ getCompanyName(user.empresaId) }}</td>
+                  <td class="px-4 py-3">{{ getSedeName(user.sedeId) }}</td>
+                </tr>
+              }
+              @if (!users().length && !loading()) {
+                <tr>
+                  <td class="px-4 py-8 text-center text-slate-500" colspan="5">No hay usuarios para el alcance actual.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
         </div>
-      </form>
-
-      <div class="overflow-x-auto rounded-xl border border-slate-200">
-        <table class="min-w-full divide-y divide-slate-200 text-sm">
-          <thead class="bg-slate-50 text-left text-slate-600">
-            <tr>
-              <th class="px-4 py-3 font-semibold">Nombre</th>
-              <th class="px-4 py-3 font-semibold">Usuario</th>
-              <th class="px-4 py-3 font-semibold">Rol</th>
-              <th class="px-4 py-3 font-semibold">Empresa</th>
-              <th class="px-4 py-3 font-semibold">Sede</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100 bg-white">
-            <tr *ngFor="let user of users()">
-              <td class="px-4 py-3">{{ user.nombre || '-' }}</td>
-              <td class="px-4 py-3">{{ user.username }}</td>
-              <td class="px-4 py-3"><span class="badge-role">{{ user.role }}</span></td>
-              <td class="px-4 py-3">{{ getCompanyName(user.empresaId) }}</td>
-              <td class="px-4 py-3">{{ getSedeName(user.sedeId) }}</td>
-            </tr>
-            <tr *ngIf="!users().length && !loading()">
-              <td class="px-4 py-8 text-center text-slate-500" colspan="5">No hay usuarios para el alcance actual.</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-  `
+      </section>
+    `
 })
 export class UserManagementPageComponent {
   private readonly fb = inject(FormBuilder);
