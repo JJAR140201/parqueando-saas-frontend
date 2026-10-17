@@ -71,6 +71,8 @@ export class CompanyService {
       id: this.toNumber(company['id'] ?? company['empresaId']),
       nit: String(company['nit'] ?? ''),
       nombre: String(company['nombre'] ?? company['razonSocial'] ?? ''),
+      colorMarca: this.toOptionalString(company['colorMarca']),
+      logo: this.toOptionalString(company['logo']),
       sedes: Array.isArray(company['sedes'])
         ? (company['sedes'] as unknown[]).map((sede) => this.normalizeSede(sede))
         : []

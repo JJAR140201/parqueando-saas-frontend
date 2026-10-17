@@ -1,7 +1,8 @@
 
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, effect } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { Role } from '../../core/models/auth.models';
+import { BrandingService } from '../../core/services/branding.service';
 import { AuthService } from '../../core/services/auth.service';
 import { AuthStoreService } from '../../core/services/auth-store.service';
 
@@ -20,7 +21,10 @@ interface NavItem {
       <div class="mx-auto grid min-h-[calc(100vh-1.5rem)] max-w-7xl grid-cols-1 gap-4 lg:grid-cols-[260px_1fr]">
         <aside class="app-surface p-4 lg:p-5">
           <div class="mb-6 border-b border-slate-200 pb-4">
-            <p class="text-xs uppercase tracking-[0.16em] text-slate-500">Parqueando</p>
+            @if (branding.logo(); as logo) {
+              <img [src]="logo" alt="Logo" class="mb-3 h-14 w-14 rounded-xl object-contain" />
+            }
+            <p class="text-xs uppercase tracking-[0.16em] text-slate-500">{{ authStore.empresaNombre() || 'Parqueando' }}</p>
             <h1 class="text-lg font-semibold text-slate-900">Operacion</h1>
           </div>
     
@@ -28,7 +32,7 @@ interface NavItem {
             @for (item of navItems(); track item) {
               <a
                 [routerLink]="item.route"
-                routerLinkActive="bg-slate-900 text-white"
+                routerLinkActive="nav-active"
                 class="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
                 >
                 <i [class]="item.icon"></i>
@@ -63,6 +67,7 @@ interface NavItem {
 })
 export class MainLayoutComponent {
   readonly authStore = inject(AuthStoreService);
+  readonly branding = inject(BrandingService);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
@@ -77,6 +82,12 @@ export class MainLayoutComponent {
       label: 'Tarifas',
       route: '/app/tarifas',
       icon: 'fa-solid fa-tags',
+      roles: ['SUPER_ADMIN']
+    },
+    {
+      label: 'Marca',
+      route: '/app/marca',
+      icon: 'fa-solid fa-palette',
       roles: ['SUPER_ADMIN']
     },
     {
@@ -123,6 +134,15 @@ export class MainLayoutComponent {
     }
   ];
 
+  constructor() {
+    // SUPER_ADMIN no pertenece a una empresa: usa la marca por defecto.
+    effect(() => {
+      if (this.authStore.isAuthenticated() && this.authStore.empresaId() !== null) {
+        this.branding.loadMine();
+      }
+    });
+  }
+
   readonly navItems = computed(() => {
     const role = this.authStore.role();
     return this.allItems.filter((item) => item.roles.includes(role));
@@ -130,6 +150,7 @@ export class MainLayoutComponent {
 
   logout(): void {
     this.authService.logout();
+    this.branding.reset();
     void this.router.navigateByUrl('/login');
   }
 }
