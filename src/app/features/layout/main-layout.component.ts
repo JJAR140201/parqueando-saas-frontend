@@ -121,6 +121,12 @@ export class MainLayoutComponent {
       roles: ['SUPER_ADMIN', 'ADMIN', 'OPERARIO']
     },
     {
+      label: 'WhatsApp',
+      route: '/app/whatsapp',
+      icon: 'fa-brands fa-whatsapp',
+      roles: ['SUPER_ADMIN', 'ADMIN']
+    },
+    {
       label: 'Reportes',
       route: '/app/reportes',
       icon: 'fa-solid fa-chart-column',

@@ -138,6 +138,16 @@ import { ToastService } from '../../core/services/toast.service';
           <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Telefono</span>
           <input class="input-base" formControlName="telefono" placeholder="+573001234567" />
         </label>
+
+        <label class="space-y-1">
+          <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Nombre del cliente</span>
+          <input class="input-base" formControlName="nombreCliente" placeholder="Juan Perez" maxlength="120" />
+        </label>
+
+        <label class="flex items-start gap-2 text-sm text-slate-700 sm:col-span-2">
+          <input class="mt-1" type="checkbox" formControlName="whatsappHabilitado" />
+          <span>El cliente autoriza recibir notificaciones de su mensualidad por WhatsApp.</span>
+        </label>
     
         @if (isSuperAdmin()) {
           <label class="space-y-1">
@@ -208,7 +218,15 @@ import { ToastService } from '../../core/services/toast.service';
                     {{ row.vigenteHoy ? 'Si' : 'No' }}
                   </span>
                 </td>
-                <td class="px-4 py-3 text-slate-700">{{ row.telefono }}</td>
+                <td class="px-4 py-3 text-slate-700">
+                  {{ row.telefono }}
+                  @if (row.nombreCliente) {
+                    <span class="block text-xs text-slate-400">{{ row.nombreCliente }}</span>
+                  }
+                  @if (row.whatsappHabilitado) {
+                    <span class="mt-1 inline-block rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">WhatsApp</span>
+                  }
+                </td>
                 <td class="px-4 py-3 text-right">
                   <button class="btn-secondary mr-2" type="button" (click)="openEdit(row)">Editar</button>
                   <button class="rounded-lg border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-600" type="button" (click)="cancel(row)">
@@ -294,6 +312,8 @@ export class MensualidadesPageComponent {
     fechaInicio: ['', Validators.required],
     fechaFin: ['', Validators.required],
     telefono: ['', [Validators.required, Validators.pattern(/^\+[1-9]\d{1,14}$/)]],
+    nombreCliente: [''],
+    whatsappHabilitado: [false],
     empresaId: [this.authStore.empresaId() ?? 0, [Validators.required, Validators.min(1)]],
     sedeId: [this.authStore.sedeId() ?? 0, [Validators.required, Validators.min(1)]],
     activa: [true]
@@ -377,6 +397,8 @@ export class MensualidadesPageComponent {
       fechaInicio: '',
       fechaFin: '',
       telefono: '',
+      nombreCliente: '',
+      whatsappHabilitado: false,
       empresaId: this.currentEmpresaId(),
       sedeId: this.currentSedeId(),
       activa: true
@@ -400,6 +422,8 @@ export class MensualidadesPageComponent {
       fechaInicio: row.fechaInicio,
       fechaFin: row.fechaFin,
       telefono: row.telefono,
+      nombreCliente: row.nombreCliente ?? '',
+      whatsappHabilitado: row.whatsappHabilitado ?? false,
       empresaId: row.empresaId,
       sedeId: row.sedeId,
       activa: row.activa
@@ -668,6 +692,8 @@ export class MensualidadesPageComponent {
       fechaInicio: raw.fechaInicio,
       fechaFin: raw.fechaFin,
       telefono: raw.telefono.trim(),
+      nombreCliente: raw.nombreCliente.trim() || undefined,
+      whatsappHabilitado: raw.whatsappHabilitado,
       empresaId: this.isSuperAdmin() ? raw.empresaId : this.currentEmpresaId(),
       sedeId: this.isSuperAdmin() ? raw.sedeId : this.currentSedeId(),
       activa: raw.activa

@@ -14,6 +14,7 @@ import { CompanyTariffsPageComponent } from './features/super-admin/company-tari
 import { BrandingManagementPageComponent } from './features/super-admin/branding-management.page.component';
 import { LicenseManagementPageComponent } from './features/super-admin/license-management.page.component';
 import { UserManagementPageComponent } from './features/users/user-management.page.component';
+import { WhatsappPageComponent } from './features/whatsapp/whatsapp.page.component';
 
 export const routes: Routes = [
 	{
@@ -80,6 +81,12 @@ export const routes: Routes = [
 				component: MensualidadesPageComponent,
 				canActivate: [roleGuard],
 				data: { roles: ['SUPER_ADMIN', 'ADMIN', 'OPERARIO'] }
+			},
+			{
+				path: 'whatsapp',
+				component: WhatsappPageComponent,
+				canActivate: [roleGuard],
+				data: { roles: ['SUPER_ADMIN', 'ADMIN'] }
 			},
 			{
 				path: 'reportes',
