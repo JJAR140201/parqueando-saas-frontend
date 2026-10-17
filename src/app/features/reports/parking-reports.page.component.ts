@@ -112,7 +112,7 @@ import { ParkingReportItem, ReportStatus } from '../../core/models/report.models
                 <td class="px-4 py-3 text-slate-700">{{ item.estado || '-' }}</td>
                 <td class="px-4 py-3 text-slate-700">{{ item.fechaIngreso || '-' }}</td>
                 <td class="px-4 py-3 text-slate-700">{{ item.fechaSalida || '-' }}</td>
-                <td class="px-4 py-3 text-slate-700">{{ item.totalCobrado ?? 0 | number }}</td>
+                <td class="px-4 py-3 text-slate-700">{{ item.totalCobrado ?? 0 | currency:'COP':'symbol-narrow':'1.0-0' }}</td>
               </tr>
             }
             @if (!rows().length && !loading()) {

@@ -13,6 +13,8 @@ export interface Company {
   id?: number;
   nit: string;
   nombre: string;
+  colorMarca?: string;
+  logo?: string;
   sedes?: Sede[];
 }
 

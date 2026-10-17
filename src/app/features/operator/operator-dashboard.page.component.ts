@@ -67,7 +67,7 @@ import { ToastService } from '../../core/services/toast.service';
               <dt>Horas</dt>
               <dd class="text-right font-semibold">{{ resumen.horas | number:'1.1-2' }}</dd>
               <dt>Total</dt>
-              <dd class="text-right text-base font-bold text-emerald-600">$ {{ resumen.totalPagado | number }}</dd>
+              <dd class="text-right text-base font-bold text-emerald-600">{{ resumen.totalPagado | currency:'COP':'symbol-narrow':'1.0-0' }}</dd>
             </dl>
             @if (!salidaConfirmada()) {
               <div class="space-y-3 pt-3">
@@ -94,6 +94,10 @@ import { ToastService } from '../../core/services/toast.service';
     `
 })
 export class OperatorDashboardPageComponent {
+  private formatCop(value: number | null | undefined): string {
+    return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value ?? 0);
+  }
+
   private readonly fb = inject(FormBuilder);
   private readonly parkingService = inject(ParkingService);
   private readonly toastService = inject(ToastService);
@@ -184,7 +188,7 @@ export class OperatorDashboardPageComponent {
       next: () => {
         this.toastService.show({
           title: 'Salida registrada',
-          description: `Vehiculo ${resumen.placa} retirado. Total: $${resumen.totalPagado}`,
+          description: `Vehiculo ${resumen.placa} retirado. Total: ${this.formatCop(resumen.totalPagado)}`,
           type: 'success'
         });
         this.salidaConfirmada.set(true);
