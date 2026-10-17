@@ -200,7 +200,7 @@ import { ToastService } from '../../core/services/toast.service';
               <tr>
                 <td class="px-4 py-3 font-medium text-slate-800">{{ row.placa }}</td>
                 <td class="px-4 py-3 text-slate-700">{{ row.tipoVehiculo }}</td>
-                <td class="px-4 py-3 text-slate-700">$ {{ row.valorMensual | number }}</td>
+                <td class="px-4 py-3 text-slate-700">{{ row.valorMensual | currency:'COP':'symbol-narrow':'1.0-0' }}</td>
                 <td class="px-4 py-3 text-slate-700">{{ row.fechaInicio }}</td>
                 <td class="px-4 py-3 text-slate-700">{{ row.fechaFin }}</td>
                 <td class="px-4 py-3">

@@ -105,11 +105,16 @@ function passwordsMatchValidator(control: AbstractControl): ValidationErrors | n
                   </label>
                   <label class="space-y-1">
                     <span class="text-sm font-medium text-slate-700">Password</span>
-                    <input class="input-base" type="password" formControlName="password" />
+                    <input class="input-base" type="password" formControlName="password" autocomplete="new-password" />
+                    @if (adminGroup.get('password')?.invalid && adminGroup.get('password')?.touched) {
+                      <span class="text-xs text-rose-500">La contrasena debe tener entre 8 y 72 caracteres.</span>
+                    } @else {
+                      <span class="text-xs text-slate-500">Minimo 8 caracteres.</span>
+                    }
                   </label>
                   <label class="space-y-1">
                     <span class="text-sm font-medium text-slate-700">Confirmar password</span>
-                    <input class="input-base" type="password" formControlName="confirmPassword" />
+                    <input class="input-base" type="password" formControlName="confirmPassword" autocomplete="new-password" />
                   </label>
                 </div>
                 @if (adminGroup.errors?.['passwordMismatch'] && adminGroup.touched) {
@@ -154,7 +159,7 @@ export class LicenseActivationPageComponent {
       {
         nombre: [''],
         username: ['', Validators.required],
-        password: ['', [Validators.required, Validators.minLength(8)]],
+        password: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(72)]],
         confirmPassword: ['', Validators.required]
       },
       { validators: passwordsMatchValidator }
