@@ -11,6 +11,7 @@ import { ParkingReportsPageComponent } from './features/reports/parking-reports.
 import { ResumenDiaPageComponent } from './features/reports/resumen-dia.page.component';
 import { CompanyManagementPageComponent } from './features/super-admin/company-management.page.component';
 import { CompanyTariffsPageComponent } from './features/super-admin/company-tariffs.page.component';
+import { BrandingManagementPageComponent } from './features/super-admin/branding-management.page.component';
 import { LicenseManagementPageComponent } from './features/super-admin/license-management.page.component';
 import { UserManagementPageComponent } from './features/users/user-management.page.component';
 
@@ -41,6 +42,12 @@ export const routes: Routes = [
 			{
 				path: 'tarifas',
 				component: CompanyTariffsPageComponent,
+				canActivate: [roleGuard],
+				data: { roles: ['SUPER_ADMIN'] }
+			},
+			{
+				path: 'marca',
+				component: BrandingManagementPageComponent,
 				canActivate: [roleGuard],
 				data: { roles: ['SUPER_ADMIN'] }
 			},

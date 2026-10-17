@@ -13,6 +13,8 @@
 	--text-soft: #64748b;
 	--line: #e2e8f0;
 	--success: #10b981;
+	--brand: #0b1220;
+	--brand-contrast: #ffffff;
 }
 
 html,
@@ -35,7 +37,14 @@ h4 {
 }
 
 .btn-primary {
-  @apply inline-flex items-center justify-center rounded-lg bg-ink px-4 py-2 font-semibold text-white transition hover:bg-navy disabled:cursor-not-allowed disabled:opacity-60;
+  @apply inline-flex items-center justify-center rounded-lg px-4 py-2 font-semibold transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60;
+  background-color: var(--brand);
+  color: var(--brand-contrast);
+}
+
+.nav-active {
+	background-color: var(--brand);
+	color: var(--brand-contrast);
 }
 
 .btn-secondary {
